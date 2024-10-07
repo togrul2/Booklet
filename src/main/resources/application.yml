@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: booklet
+
+  datasource:
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 5
+    url: jdbc:postgresql://localhost:5432/booklet
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    user: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    schemas: public
+    url: jdbc:postgresql://localhost:5432/booklet
