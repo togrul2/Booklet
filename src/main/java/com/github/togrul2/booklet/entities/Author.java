@@ -12,7 +12,7 @@ import java.util.Date;
 public class Author {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     @Column(nullable = false, length = 50)
     private String name;
     @Column(nullable = false, length = 50)
@@ -20,10 +20,10 @@ public class Author {
     @Column(nullable = false)
     private Date birthDate;
     private Date deathDate;
+    @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
     private String biography;
     @Check(constraints = "rating >= 0 AND rating <= 5", name = "rating_validness_check")
     @Column(precision = 2, scale = 1)
     private BigDecimal rating;
-
 }

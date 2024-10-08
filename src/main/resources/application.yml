@@ -13,9 +13,3 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-
-  flyway:
-    user: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
-    schemas: public
-    url: jdbc:postgresql://localhost:5432/booklet
