@@ -121,9 +121,35 @@ public class AuthorServiceTests {
 
         Mockito
                 .verify(authorRepository, Mockito.times(1))
+                .existsById(author.getId());
+        Mockito
+                .verify(authorRepository, Mockito.times(1))
                 .save(Mockito.any(Author.class));
         Assertions.assertEquals(author.getId(), replaceResult.id());
         Assertions.assertEquals("Updated test biography", replaceResult.biography());
+    }
+
+    @Test
+    public void testReplaceAuthorNotFound() {
+        CreateAuthorDto createAuthorDto = CreateAuthorDto
+                .builder()
+                .name("John")
+                .surname("Doe")
+                .birthDate(LocalDate.of(1990, 1, 1))
+                .biography("Updated test biography")
+                .build();
+
+        Author resultAuthor = AuthorMapper.INSTANCE.toAuthor(createAuthorDto);
+        resultAuthor.setId(author.getId());
+
+        Mockito
+                .when(authorRepository.existsById(author.getId()))
+                .thenReturn(false);
+
+        Assertions.assertThrows(AuthorNotFound.class, () -> authorService.replace(author.getId(), createAuthorDto));
+        Mockito
+                .verify(authorRepository, Mockito.times(1))
+                .existsById(author.getId());
     }
 
     @Test
@@ -138,9 +164,10 @@ public class AuthorServiceTests {
                 author.getId(),
                 UpdateAuthorDto
                         .builder()
-                        .name("John")
+                        .name("Peter")
                         .surname("Doe")
-                        .birthDate(LocalDate.of(1990, 1, 1))
+                        .birthDate(LocalDate.of(1950, 7, 11))
+                        .deathDate(LocalDate.of(2020, 5, 17))
                         .biography("Updated test biography")
                         .build()
         );

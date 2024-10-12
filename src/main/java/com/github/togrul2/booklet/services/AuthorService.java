@@ -19,11 +19,17 @@ public class AuthorService {
     private final AuthorRepository authorRepository;
 
     public Page<AuthorDto> findAll(int pageNumber, int pageSize) {
-        return authorRepository.findAll(PageRequest.of(pageNumber - 1, pageSize)).map(AuthorMapper.INSTANCE::toAuthorDto);
+        return authorRepository
+                .findAll(PageRequest.of(pageNumber - 1, pageSize))
+                .map(AuthorMapper.INSTANCE::toAuthorDto);
     }
 
     public AuthorDto findOneById(long id) {
-        return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.findById(id).orElseThrow(AuthorNotFound::new));
+        return AuthorMapper.INSTANCE.toAuthorDto(
+                authorRepository
+                        .findById(id)
+                        .orElseThrow(AuthorNotFound::new)
+        );
     }
 
     public AuthorDto create(CreateAuthorDto createAuthorDto) {
@@ -42,7 +48,9 @@ public class AuthorService {
     }
 
     public AuthorDto update(long id, UpdateAuthorDto updateAuthorDto) {
-        Author author = authorRepository.findById(id).orElseThrow(AuthorNotFound::new);
+        Author author = authorRepository
+                .findById(id)
+                .orElseThrow(AuthorNotFound::new);
 
         if (updateAuthorDto.name() != null)
             author.setName(updateAuthorDto.name());

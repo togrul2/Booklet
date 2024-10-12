@@ -7,6 +7,7 @@ import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Genre;
 import com.github.togrul2.booklet.exceptions.BookNotFound;
+import com.github.togrul2.booklet.exceptions.TakenAttributeException;
 import com.github.togrul2.booklet.mappers.BookMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
@@ -123,6 +124,7 @@ public class BookServiceTests {
                         .authorId(book.getAuthor().getId())
                         .genreId(book.getGenre().getId())
                         .isbn("1234567890")
+                        .year(2019)
                         .build()
         );
         Assertions.assertNotNull(result);
@@ -139,6 +141,28 @@ public class BookServiceTests {
     }
 
     @Test
+    public void testCreateWithTakenIsbn() {
+        Mockito
+                .when(bookRepository.existsByIsbn(book.getIsbn()))
+                .thenReturn(true);
+        Assertions.assertThrows(
+                TakenAttributeException.class,
+                () -> bookService.create(
+                        CreateBookDto
+                                .builder()
+                                .title("Test title")
+                                .authorId(book.getAuthor().getId())
+                                .genreId(book.getGenre().getId())
+                                .isbn(book.getIsbn())
+                                .build()
+                )
+        );
+        Mockito
+                .verify(bookRepository, Mockito.times(1))
+                .existsByIsbn(book.getIsbn());
+    }
+
+    @Test
     public void testReplace() {
         CreateBookDto createBookDto = CreateBookDto
                 .builder()
@@ -146,6 +170,7 @@ public class BookServiceTests {
                 .authorId(book.getAuthor().getId())
                 .genreId(book.getGenre().getId())
                 .isbn("1234567890")
+                .year(2020)
                 .build();
 
         Book returnBook = BookMapper.INSTANCE.toBook(createBookDto);
@@ -185,6 +210,54 @@ public class BookServiceTests {
     }
 
     @Test
+    public void testReplaceNotFound() {
+        CreateBookDto createBookDto = CreateBookDto
+                .builder()
+                .title("Test title updated")
+                .authorId(book.getAuthor().getId())
+                .genreId(book.getGenre().getId())
+                .isbn("1234567890")
+                .year(2020)
+                .build();
+
+        Mockito
+                .when(bookRepository.existsById(book.getId()))
+                .thenReturn(false);
+
+        Assertions.assertThrows(BookNotFound.class, () -> bookService.replace(book.getId(), createBookDto));
+        Mockito
+                .verify(bookRepository, Mockito.times(1))
+                .existsById(book.getId());
+    }
+
+    @Test
+    public void testReplaceWithTakenIsbn() {
+        CreateBookDto createBookDto = CreateBookDto
+                .builder()
+                .title("Test title updated")
+                .authorId(book.getAuthor().getId())
+                .genreId(book.getGenre().getId())
+                .isbn("1234567890")
+                .year(2020)
+                .build();
+
+        Mockito
+                .when(bookRepository.existsById(book.getId()))
+                .thenReturn(true);
+        Mockito
+                .when(bookRepository.existsByIsbnAndIdNot(createBookDto.isbn(), book.getId()))
+                .thenReturn(true);
+
+        Assertions.assertThrows(TakenAttributeException.class, () -> bookService.replace(book.getId(), createBookDto));
+        Mockito
+                .verify(bookRepository, Mockito.times(1))
+                .existsById(book.getId());
+        Mockito
+                .verify(bookRepository, Mockito.times(1))
+                .existsByIsbnAndIdNot(createBookDto.isbn(), book.getId());
+    }
+
+    @Test
     public void testUpdate() {
         Mockito
                 .when(bookRepository.findById(book.getId()))
@@ -192,10 +265,23 @@ public class BookServiceTests {
         Mockito
                 .when(bookRepository.save(Mockito.any(Book.class)))
                 .thenReturn(book);
+        Mockito
+                .when(authorRepository.findById(book.getAuthor().getId()))
+                .thenReturn(Optional.of(book.getAuthor()));
+        Mockito
+                .when(genreRepository.findById(book.getGenre().getId()))
+                .thenReturn(Optional.of(book.getGenre()));
 
         BookDto updateResult = bookService.update(
                 book.getId(),
-                UpdateBookDto.builder().title("Test title updated").build()
+                UpdateBookDto
+                        .builder()
+                        .title("Test title updated")
+                        .authorId(book.getAuthor().getId())
+                        .genreId(book.getGenre().getId())
+                        .isbn("1234567890")
+                        .year(2020)
+                        .build()
         );
 
         Assertions.assertEquals(book.getId(), updateResult.id());
@@ -204,8 +290,38 @@ public class BookServiceTests {
                 .verify(bookRepository, Mockito.times(1))
                 .findById(book.getId());
         Mockito
+                .verify(authorRepository, Mockito.times(1))
+                .findById(book.getAuthor().getId());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .findById(book.getGenre().getId());
+        Mockito
                 .verify(bookRepository, Mockito.times(1))
                 .save(Mockito.any(Book.class));
+    }
+
+    @Test
+    public void testUpdateWithTakenIsbn() {
+        Mockito
+                .when(bookRepository.findById(book.getId()))
+                .thenReturn(Optional.of(book));
+        Mockito
+                .when(bookRepository.existsByIsbnAndIdNot(book.getIsbn(), book.getId()))
+                .thenReturn(true);
+
+        Assertions.assertThrows(
+                TakenAttributeException.class,
+                () -> bookService.update(
+                        book.getId(),
+                        UpdateBookDto.builder().isbn("1234567890").build()
+                )
+        );
+        Mockito
+                .verify(bookRepository, Mockito.times(1))
+                .findById(book.getId());
+        Mockito
+                .verify(bookRepository, Mockito.times(1))
+                .existsByIsbnAndIdNot(book.getIsbn(), book.getId());
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.github.togrul2.booklet.dtos.GenreDto;
 import com.github.togrul2.booklet.dtos.UpdateGenreDto;
 import com.github.togrul2.booklet.entities.Genre;
 import com.github.togrul2.booklet.exceptions.GenreNotFound;
+import com.github.togrul2.booklet.exceptions.TakenAttributeException;
 import com.github.togrul2.booklet.mappers.GenreMapper;
 import com.github.togrul2.booklet.repositories.GenreRepository;
 import org.junit.jupiter.api.Assertions;
@@ -50,24 +51,24 @@ public class GenreServiceTests {
     @Test
     public void testGetGenreById() {
         Mockito
-                .when(genreRepository.findById(genre.getId()))
+                .when(genreRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.of(genre));
         GenreDto resultGenre = genreService.findOneById(genre.getId());
         Assertions.assertEquals(genre.getId(), resultGenre.id());
         Mockito
                 .verify(genreRepository, Mockito.times(1))
-                .findById(genre.getId());
+                .findById(Mockito.anyLong());
     }
 
     @Test
     public void testGetGenreByIdNotFound() {
         Mockito
-                .when(genreRepository.findById(genre.getId()))
+                .when(genreRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.empty());
         Assertions.assertThrows(GenreNotFound.class, () -> genreService.findOneById(genre.getId()));
         Mockito
                 .verify(genreRepository, Mockito.times(1))
-                .findById(genre.getId());
+                .findById(Mockito.anyLong());
     }
 
     @Test
@@ -76,10 +77,10 @@ public class GenreServiceTests {
                 .when(genreRepository.save(Mockito.any(Genre.class)))
                 .thenReturn(genre);
         Mockito
-                .when(genreRepository.existsByName(genre.getName()))
+                .when(genreRepository.existsByName(Mockito.anyString()))
                 .thenReturn(false);
         Mockito
-                .when(genreRepository.existsBySlug(genre.getSlug()))
+                .when(genreRepository.existsBySlug(Mockito.anyString()))
                 .thenReturn(false);
 
         GenreDto resultGenre = genreService.create(new CreateGenreDto("Test genre", "test-genre"));
@@ -90,10 +91,55 @@ public class GenreServiceTests {
                 .save(Mockito.any(Genre.class));
         Mockito
                 .verify(genreRepository, Mockito.times(1))
-                .existsByName(genre.getName());
+                .existsByName(Mockito.anyString());
         Mockito
                 .verify(genreRepository, Mockito.times(1))
-                .existsBySlug(genre.getSlug());
+                .existsBySlug(Mockito.anyString());
+    }
+
+    @Test
+    public void testCreateGenreWithTakenName() {
+        Mockito
+                .when(genreRepository.existsByName(Mockito.anyString()))
+                .thenReturn(true);
+
+        Assertions.assertThrows(
+                TakenAttributeException.class,
+                () -> genreService.create(new CreateGenreDto("Test genre", "test-genre"))
+        );
+        Mockito
+                .verify(genreRepository, Mockito.times(0))
+                .save(Mockito.any(Genre.class));
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsByName(Mockito.anyString());
+        Mockito
+                .verify(genreRepository, Mockito.times(0))
+                .existsBySlug(Mockito.anyString());
+    }
+
+    @Test
+    public void testCreateGenreWithTakenSlug() {
+        Mockito
+                .when(genreRepository.existsByName(Mockito.anyString()))
+                .thenReturn(false);
+        Mockito
+                .when(genreRepository.existsBySlug(Mockito.anyString()))
+                .thenReturn(true);
+
+        Assertions.assertThrows(
+                TakenAttributeException.class,
+                () -> genreService.create(new CreateGenreDto("Test genre", "test-genre"))
+        );
+        Mockito
+                .verify(genreRepository, Mockito.times(0))
+                .save(Mockito.any(Genre.class));
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsByName(Mockito.anyString());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsBySlug(Mockito.anyString());
     }
 
     @Test
@@ -103,19 +149,19 @@ public class GenreServiceTests {
         createGenre.setId(genre.getId());
 
         Mockito
-                .when(genreRepository.findById(genre.getId()))
+                .when(genreRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.of(genre));
         Mockito
-                .when(genreRepository.existsById(genre.getId()))
+                .when(genreRepository.existsById(Mockito.anyLong()))
                 .thenReturn(true);
         Mockito
                 .when(genreRepository.save(Mockito.any(Genre.class)))
                 .thenReturn(genre);
         Mockito
-                .when(genreRepository.existsByNameAndIdNot(genre.getName(), genre.getId()))
+                .when(genreRepository.existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong()))
                 .thenReturn(false);
         Mockito
-                .when(genreRepository.existsBySlugAndIdNot(genre.getSlug(), genre.getId()))
+                .when(genreRepository.existsBySlugAndIdNot(Mockito.anyString(), Mockito.anyLong()))
                 .thenReturn(false);
 
         GenreDto resultGenre = genreService.replace(genre.getId(), createGenreDto);
@@ -123,52 +169,188 @@ public class GenreServiceTests {
         Assertions.assertEquals(genre.getId(), resultGenre.id());
         Mockito
                 .verify(genreRepository, Mockito.times(1))
+                .existsById(Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsBySlugAndIdNot(Mockito.anyString(), Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .save(Mockito.any(Genre.class));
+    }
+
+    @Test
+    public void testReplaceGenreNotFound() {
+        CreateGenreDto createGenreDto = new CreateGenreDto("Test genre", "test-genre");
+
+        Mockito
+                .when(genreRepository.existsById(Mockito.anyLong()))
+                .thenReturn(false);
+
+        Assertions.assertThrows(
+                GenreNotFound.class,
+                () -> genreService.replace(genre.getId(), createGenreDto)
+        );
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsById(Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(0))
+                .save(Mockito.any(Genre.class));
+    }
+
+    @Test
+    public void testReplaceGenreWithTakenName() {
+        CreateGenreDto createGenreDto = new CreateGenreDto("Test genre", "test-genre");
+
+        Mockito
+                .when(genreRepository.existsById(Mockito.anyLong()))
+                .thenReturn(true);
+        Mockito
+                .when(genreRepository.existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong()))
+                .thenReturn(true);
+
+        Assertions.assertThrows(
+                TakenAttributeException.class,
+                () -> genreService.replace(genre.getId(), createGenreDto)
+        );
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsById(Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(0))
+                .save(Mockito.any(Genre.class));
+    }
+
+    @Test
+    public void testReplaceGenreWithTakenSlug() {
+        CreateGenreDto createGenreDto = new CreateGenreDto("Test genre", "test-genre");
+
+        Mockito
+                .when(genreRepository.existsById(Mockito.anyLong()))
+                .thenReturn(true);
+        Mockito
+                .when(genreRepository.existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong()))
+                .thenReturn(false);
+        Mockito
+                .when(genreRepository.existsBySlugAndIdNot(Mockito.anyString(), Mockito.anyLong()))
+                .thenReturn(true);
+
+        Assertions.assertThrows(
+                TakenAttributeException.class,
+                () -> genreService.replace(genre.getId(), createGenreDto)
+        );
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
                 .existsById(genre.getId());
         Mockito
                 .verify(genreRepository, Mockito.times(1))
-                .existsByNameAndIdNot(genre.getName(), genre.getId());
+                .existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong());
         Mockito
                 .verify(genreRepository, Mockito.times(1))
-                .existsBySlugAndIdNot(genre.getSlug(), genre.getId());
+                .existsBySlugAndIdNot(Mockito.anyString(), Mockito.anyLong());
         Mockito
-                .verify(genreRepository, Mockito.times(1))
+                .verify(genreRepository, Mockito.times(0))
                 .save(Mockito.any(Genre.class));
     }
 
     @Test
     public void testUpdateGenre() {
         Mockito
-                .when(genreRepository.findById(genre.getId()))
+                .when(genreRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.of(genre));
         Mockito
-                .when(genreRepository.existsByNameAndIdNot(genre.getName(), genre.getId()))
+                .when(genreRepository.existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong()))
                 .thenReturn(false);
         Mockito
                 .when(genreRepository.save(Mockito.any(Genre.class)))
                 .thenReturn(genre);
 
         GenreDto resultGenre = genreService.update(
-                genre.getId(), UpdateGenreDto.builder().name("Test genre").build()
+                genre.getId(),
+                new UpdateGenreDto("Test genre", "test-genre")
         );
 
         Assertions.assertEquals(genre.getId(), resultGenre.id());
         Mockito
                 .verify(genreRepository, Mockito.times(1))
-                .findById(genre.getId());
+                .findById(Mockito.anyLong());
         Mockito
                 .verify(genreRepository, Mockito.times(1))
                 .save(Mockito.any(Genre.class));
     }
 
     @Test
+    public void testUpdateGenreWithTakenName() {
+        Mockito
+                .when(genreRepository.findById(Mockito.anyLong()))
+                .thenReturn(Optional.of(genre));
+        Mockito
+                .when(genreRepository.existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong()))
+                .thenReturn(true);
+
+        Assertions.assertThrows(
+                TakenAttributeException.class,
+                () -> genreService.update(genre.getId(), new UpdateGenreDto("Test name", "test-name"))
+        );
+
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .findById(Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(0))
+                .save(Mockito.any(Genre.class));
+    }
+
+    @Test
+    public void testUpdateGenreWithTakenSlug() {
+        Mockito
+                .when(genreRepository.findById(Mockito.anyLong()))
+                .thenReturn(Optional.of(genre));
+        Mockito
+                .when(genreRepository.existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong()))
+                .thenReturn(false);
+        Mockito
+                .when(genreRepository.existsBySlugAndIdNot(Mockito.anyString(), Mockito.anyLong()))
+                .thenReturn(true);
+
+        Assertions.assertThrows(
+                TakenAttributeException.class,
+                () -> genreService.update(genre.getId(), new UpdateGenreDto("Test genre", "test-genre"))
+        );
+
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .findById(Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsByNameAndIdNot(Mockito.anyString(), Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .existsBySlugAndIdNot(Mockito.anyString(), Mockito.anyLong());
+        Mockito
+                .verify(genreRepository, Mockito.times(0))
+                .save(Mockito.any(Genre.class));
+    }
+
+
+    @Test
     public void testDeleteGenre() {
         Mockito
                 .doNothing()
                 .when(genreRepository)
-                .deleteById(genre.getId());
+                .deleteById(Mockito.anyLong());
         genreService.delete(genre.getId());
         Mockito
                 .verify(genreRepository, Mockito.times(1))
-                .deleteById(genre.getId());
+                .deleteById(Mockito.anyLong());
     }
 }

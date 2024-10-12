@@ -4,6 +4,7 @@ import com.github.togrul2.booklet.dtos.BookDto;
 import com.github.togrul2.booklet.dtos.CreateBookDto;
 import com.github.togrul2.booklet.dtos.UpdateBookDto;
 import com.github.togrul2.booklet.entities.Book;
+import com.github.togrul2.booklet.exceptions.TakenAttributeException;
 import com.github.togrul2.booklet.exceptions.AuthorNotFound;
 import com.github.togrul2.booklet.exceptions.BookNotFound;
 import com.github.togrul2.booklet.exceptions.GenreNotFound;
@@ -34,8 +35,23 @@ public class BookService {
         return BookMapper.INSTANCE.toBookDto(bookRepository.findById(id).orElseThrow(BookNotFound::new));
     }
 
+    private void validateUniqueFields(CreateBookDto createBookDto) {
+        if (bookRepository.existsByIsbn(createBookDto.isbn()))
+            throw new TakenAttributeException("ISBN is already taken");
+    }
+
+    private void validateUniqueFields(UpdateBookDto updateBookDto, long id) {
+        if (updateBookDto.isbn() != null && bookRepository.existsByIsbnAndIdNot(updateBookDto.isbn(), id))
+            throw new TakenAttributeException("ISBN is already taken");
+    }
+
+    private void validateUniqueFields(CreateBookDto createBookDto, long id) {
+        if (bookRepository.existsByIsbnAndIdNot(createBookDto.isbn(), id))
+            throw new TakenAttributeException("ISBN is already taken");
+    }
+
     public BookDto create(CreateBookDto createBookDto) {
-        // TODO: validate unique fields.
+        validateUniqueFields(createBookDto);
         Book book = BookMapper.INSTANCE.toBook(createBookDto);
         book.setAuthor(authorRepository.findById(createBookDto.authorId()).orElseThrow(AuthorNotFound::new));
         book.setGenre(genreRepository.findById(createBookDto.genreId()).orElseThrow(GenreNotFound::new));
@@ -46,6 +62,8 @@ public class BookService {
         if (!bookRepository.existsById(id))
             throw new BookNotFound();
 
+        validateUniqueFields(createBookDto, id);
+
         Book book = BookMapper.INSTANCE.toBook(createBookDto);
         book.setId(id);
         book.setAuthor(authorRepository.findById(createBookDto.authorId()).orElseThrow(AuthorNotFound::new));
@@ -55,6 +73,7 @@ public class BookService {
 
     public BookDto update(long id, UpdateBookDto updateBookDto) {
         Book book = bookRepository.findById(id).orElseThrow(BookNotFound::new);
+        validateUniqueFields(updateBookDto, id);
 
         if (updateBookDto.title() != null)
             book.setTitle(updateBookDto.title());

@@ -13,3 +13,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+server:
+  error:
+    include-stacktrace: on_param
