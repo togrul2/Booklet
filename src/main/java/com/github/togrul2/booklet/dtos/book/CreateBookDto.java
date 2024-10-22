@@ -1,19 +1,26 @@
-package com.github.togrul2.booklet.dtos;
+package com.github.togrul2.booklet.dtos.book;
 
 import com.github.togrul2.booklet.entities.Book;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import org.hibernate.validator.constraints.Length;
 
 @Builder
-public record UpdateBookDto (
+public record CreateBookDto(
+        @NotNull
         @NotBlank
         @Length(max = Book.TITLE_MAX_LENGTH)
         String title,
-        Long authorId,
-        Long genreId,
+        @NotNull
+        long authorId,
+        @NotNull
+        long genreId,
+        @NotNull
         @NotBlank
         @Length(min = Book.ISBN_MIN_LENGTH, max = Book.ISBN_MAX_LENGTH)
         String isbn,
-        Integer year
-) {}
+        @NotNull
+        int year
+) {
+}

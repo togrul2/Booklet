@@ -1,14 +1,15 @@
 package com.github.togrul2.booklet.controllers;
 
-import com.github.togrul2.booklet.dtos.BookDto;
-import com.github.togrul2.booklet.dtos.CreateBookDto;
-import com.github.togrul2.booklet.dtos.UpdateBookDto;
+import com.github.togrul2.booklet.dtos.book.BookDto;
+import com.github.togrul2.booklet.dtos.book.CreateBookDto;
+import com.github.togrul2.booklet.dtos.PaginationDto;
+import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
 import com.github.togrul2.booklet.services.BookService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -21,11 +22,8 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public Page<BookDto> getBooks(
-            @RequestParam(defaultValue = "1") int pageNumber,
-            @RequestParam(defaultValue = "10") @Max(100) int pageSize
-    ) {
-        return bookService.findAll(pageNumber, pageSize);
+    public Page<BookDto> getBooks(@RequestParam @Valid PaginationDto paginationDto) {
+        return bookService.findAll(paginationDto.getPageNumber(), paginationDto.getPageSize());
     }
 
     @GetMapping("/{id}")
@@ -34,7 +32,8 @@ public class BookController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createBook(@RequestBody CreateBookDto createBookDto) {
+    @PreAuthorize("hasAuthority('admin:write')")
+    public ResponseEntity<Void> createBook(@RequestBody CreateBookDto createBookDto) {
         BookDto bookDto = bookService.create(createBookDto);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -44,17 +43,20 @@ public class BookController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('admin:write')")
     public BookDto replaceBook(@PathVariable long id, @RequestBody @Valid CreateBookDto createBookDto) {
         return bookService.replace(id, createBookDto);
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('admin:write')")
     public BookDto updateBook(@PathVariable long id, @RequestBody @Valid UpdateBookDto updateBookDto) {
         return bookService.update(id, updateBookDto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBook(@PathVariable long id) {
+    @PreAuthorize("hasAuthority('admin:write')")
+    public ResponseEntity<Void> deleteBook(@PathVariable long id) {
         bookService.delete(id);
         return ResponseEntity.noContent().build();
     }

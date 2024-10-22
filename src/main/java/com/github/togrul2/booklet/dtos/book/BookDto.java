@@ -1,4 +1,4 @@
-package com.github.togrul2.booklet.dtos;
+package com.github.togrul2.booklet.dtos.book;
 
 import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.entities.Genre;

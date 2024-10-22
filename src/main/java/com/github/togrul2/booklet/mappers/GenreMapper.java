@@ -1,7 +1,7 @@
 package com.github.togrul2.booklet.mappers;
 
-import com.github.togrul2.booklet.dtos.CreateGenreDto;
-import com.github.togrul2.booklet.dtos.GenreDto;
+import com.github.togrul2.booklet.dtos.genre.CreateGenreDto;
+import com.github.togrul2.booklet.dtos.genre.GenreDto;
 import com.github.togrul2.booklet.entities.Genre;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

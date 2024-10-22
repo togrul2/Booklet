@@ -1,11 +1,11 @@
 package com.github.togrul2.booklet.controllers;
 
-import com.github.togrul2.booklet.dtos.AuthorDto;
-import com.github.togrul2.booklet.dtos.CreateAuthorDto;
-import com.github.togrul2.booklet.dtos.UpdateAuthorDto;
+import com.github.togrul2.booklet.dtos.author.AuthorDto;
+import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
+import com.github.togrul2.booklet.dtos.PaginationDto;
+import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.services.AuthorService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +21,8 @@ public class AuthorController {
     private final AuthorService authorService;
 
     @GetMapping
-    public Page<AuthorDto> getAuthors(
-            @RequestParam(defaultValue = "1") int pageNumber,
-            @RequestParam(defaultValue = "10") @Max(100) int pageSize
-    ) {
-        return authorService.findAll(pageNumber, pageSize);
+    public Page<AuthorDto> getAuthors(@RequestParam @Valid PaginationDto paginationDto) {
+        return authorService.findAll(paginationDto.getPageNumber(), paginationDto.getPageSize());
     }
 
     @GetMapping("/{id}")
@@ -34,7 +31,7 @@ public class AuthorController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createAuthor(@RequestBody @Valid CreateAuthorDto createAuthorDto) {
+    public ResponseEntity<Void> createAuthor(@RequestBody @Valid CreateAuthorDto createAuthorDto) {
         AuthorDto authorDto = authorService.create(createAuthorDto);
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -55,7 +52,7 @@ public class AuthorController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAuthor(@PathVariable long id) {
+    public ResponseEntity<Void> deleteAuthor(@PathVariable long id) {
         authorService.delete(id);
         return ResponseEntity.noContent().build();
     }

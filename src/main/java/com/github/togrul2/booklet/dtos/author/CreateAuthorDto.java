@@ -1,4 +1,4 @@
-package com.github.togrul2.booklet.dtos;
+package com.github.togrul2.booklet.dtos.author;
 
 import com.github.togrul2.booklet.entities.Author;
 import jakarta.validation.constraints.NotBlank;

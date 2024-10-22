@@ -1,8 +1,8 @@
 package com.github.togrul2.booklet.controllers;
 
-import com.github.togrul2.booklet.dtos.CreateGenreDto;
-import com.github.togrul2.booklet.dtos.GenreDto;
-import com.github.togrul2.booklet.dtos.UpdateGenreDto;
+import com.github.togrul2.booklet.dtos.genre.CreateGenreDto;
+import com.github.togrul2.booklet.dtos.genre.GenreDto;
+import com.github.togrul2.booklet.dtos.genre.UpdateGenreDto;
 import com.github.togrul2.booklet.services.GenreService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -30,7 +30,7 @@ public class GenreController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createGenre(@RequestBody @Valid CreateGenreDto createGenreDto) {
+    public ResponseEntity<Void> createGenre(@RequestBody @Valid CreateGenreDto createGenreDto) {
         GenreDto createdGenre = genreService.create(createGenreDto);
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -51,7 +51,7 @@ public class GenreController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteGenre(@PathVariable long id) {
+    public ResponseEntity<Void> deleteGenre(@PathVariable long id) {
         genreService.delete(id);
         return ResponseEntity.noContent().build();
     }

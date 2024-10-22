@@ -1,8 +1,8 @@
 package com.github.togrul2.booklet.services;
 
-import com.github.togrul2.booklet.dtos.BookDto;
-import com.github.togrul2.booklet.dtos.CreateBookDto;
-import com.github.togrul2.booklet.dtos.UpdateBookDto;
+import com.github.togrul2.booklet.dtos.book.BookDto;
+import com.github.togrul2.booklet.dtos.book.CreateBookDto;
+import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
 import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Genre;

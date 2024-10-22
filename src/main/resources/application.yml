@@ -14,6 +14,10 @@ spring:
     hibernate:
       ddl-auto: validate
 
+  security:
+    jwt:
+      secret-key: bxBWG9rIQcquX1UubhgI5lIqF4B6+N0GBBN5v/eCSss=
+
 server:
   error:
     include-stacktrace: on_param

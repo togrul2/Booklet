@@ -1,8 +1,8 @@
 package com.github.togrul2.booklet.services;
 
-import com.github.togrul2.booklet.dtos.CreateGenreDto;
-import com.github.togrul2.booklet.dtos.GenreDto;
-import com.github.togrul2.booklet.dtos.UpdateGenreDto;
+import com.github.togrul2.booklet.dtos.genre.CreateGenreDto;
+import com.github.togrul2.booklet.dtos.genre.GenreDto;
+import com.github.togrul2.booklet.dtos.genre.UpdateGenreDto;
 import com.github.togrul2.booklet.entities.Genre;
 import com.github.togrul2.booklet.exceptions.TakenAttributeException;
 import com.github.togrul2.booklet.exceptions.GenreNotFound;

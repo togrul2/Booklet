@@ -1,7 +1,7 @@
 package com.github.togrul2.booklet.mappers;
 
-import com.github.togrul2.booklet.dtos.BookDto;
-import com.github.togrul2.booklet.dtos.CreateBookDto;
+import com.github.togrul2.booklet.dtos.book.BookDto;
+import com.github.togrul2.booklet.dtos.book.CreateBookDto;
 import com.github.togrul2.booklet.entities.Book;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

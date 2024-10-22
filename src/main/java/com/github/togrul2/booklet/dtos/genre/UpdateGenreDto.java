@@ -1,4 +1,4 @@
-package com.github.togrul2.booklet.dtos;
+package com.github.togrul2.booklet.dtos.genre;
 
 import com.github.togrul2.booklet.entities.Genre;
 import org.hibernate.validator.constraints.Length;

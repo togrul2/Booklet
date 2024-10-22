@@ -1,4 +1,4 @@
-package com.github.togrul2.booklet.dtos;
+package com.github.togrul2.booklet.dtos.genre;
 
 public record GenreDto(
         long id,

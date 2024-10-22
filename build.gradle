@@ -8,6 +8,12 @@ plugins {
 group = 'com.github.togrul2'
 version = '0.0.1-SNAPSHOT'
 
+ext {
+    jjwtVersion = '0.12.6'
+    mapStructVersion = '1.6.2'
+    lombokMapstructBindingVersion = '0.2.0'
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(23)
@@ -26,29 +32,32 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.flywaydb:flyway-database-postgresql'
-
     implementation 'org.mapstruct:mapstruct:1.6.2'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2', 'org.projectlombok:lombok', 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
     compileOnly 'org.projectlombok:lombok'
-
-    testCompileOnly 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    // https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    // https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'org.postgresql:postgresql'
+
+
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
-}
-
-flyway {
-    url = 'jdbc:postgresql://localhost:5432/booklet?user=postgres&password=postgres'
-    schemas = ['public']
 }

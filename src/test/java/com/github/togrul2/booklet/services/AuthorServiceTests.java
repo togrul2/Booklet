@@ -1,8 +1,8 @@
 package com.github.togrul2.booklet.services;
 
-import com.github.togrul2.booklet.dtos.AuthorDto;
-import com.github.togrul2.booklet.dtos.CreateAuthorDto;
-import com.github.togrul2.booklet.dtos.UpdateAuthorDto;
+import com.github.togrul2.booklet.dtos.author.AuthorDto;
+import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
+import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.exceptions.AuthorNotFound;
 import com.github.togrul2.booklet.mappers.AuthorMapper;
