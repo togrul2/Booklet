@@ -9,6 +9,7 @@ import com.github.togrul2.booklet.exceptions.GenreNotFound;
 import com.github.togrul2.booklet.mappers.GenreMapper;
 import com.github.togrul2.booklet.repositories.GenreRepository;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,28 +24,38 @@ public class GenreService {
     }
 
     public GenreDto findOneById(long id) {
-        return GenreMapper.INSTANCE.toGenreDto(genreRepository.findById(id).orElseThrow(GenreNotFound::new));
+        Genre genre = genreRepository
+                .findById(id)
+                .orElseThrow(GenreNotFound::new);
+        return GenreMapper.INSTANCE.toGenreDto(genre);
     }
 
-    private void validateGenreData(CreateGenreDto createGenreDto) {
-        if (genreRepository.existsByName(createGenreDto.name()))
+    private void validateGenreData(@NonNull CreateGenreDto createGenreDto) {
+        // TODO: Throw multiple errors, not one by one like now.
+        if (genreRepository.existsByName(createGenreDto.name())) {
             throw new TakenAttributeException("Genre with this name already exists");
-        if (genreRepository.existsBySlug(createGenreDto.slug()))
+        }
+        if (genreRepository.existsBySlug(createGenreDto.slug())) {
             throw new TakenAttributeException("Genre with this slug already exists");
+        }
     }
 
-    private void validateGenreData(CreateGenreDto createGenreDto, long id) {
-        if (genreRepository.existsByNameAndIdNot(createGenreDto.name(), id))
+    private void validateGenreData(@NonNull CreateGenreDto createGenreDto, long id) {
+        if (genreRepository.existsByNameAndIdNot(createGenreDto.name(), id)) {
             throw new TakenAttributeException("Genre with this name already exists");
-        if (genreRepository.existsBySlugAndIdNot(createGenreDto.slug(), id))
+        }
+        if (genreRepository.existsBySlugAndIdNot(createGenreDto.slug(), id)) {
             throw new TakenAttributeException("Genre with this slug already exists");
+        }
     }
 
-    private void validateGenreData(UpdateGenreDto updateGenreDto, long id) {
-        if ((updateGenreDto.name() != null) && genreRepository.existsByNameAndIdNot(updateGenreDto.name(), id))
+    private void validateGenreData(@NonNull UpdateGenreDto updateGenreDto, long id) {
+        if ((updateGenreDto.name() != null) && genreRepository.existsByNameAndIdNot(updateGenreDto.name(), id)) {
             throw new TakenAttributeException("Genre with this name already exists");
-        if ((updateGenreDto.slug() != null) && genreRepository.existsBySlugAndIdNot(updateGenreDto.slug(), id))
+        }
+        if ((updateGenreDto.slug() != null) && genreRepository.existsBySlugAndIdNot(updateGenreDto.slug(), id)) {
             throw new TakenAttributeException("Genre with this slug already exists");
+        }
     }
 
     public GenreDto create(CreateGenreDto createGenreDto) {
@@ -55,8 +66,9 @@ public class GenreService {
     }
 
     public GenreDto replace(long id, CreateGenreDto createGenreDto) {
-        if (!genreRepository.existsById(id))
+        if (!genreRepository.existsById(id)) {
             throw new GenreNotFound();
+        }
 
         validateGenreData(createGenreDto, id);
         Genre genre = GenreMapper.INSTANCE.toGenre(createGenreDto);
@@ -68,10 +80,12 @@ public class GenreService {
         Genre genre = genreRepository.findById(id).orElseThrow(GenreNotFound::new);
         validateGenreData(updateGenreDto, id);
 
-        if (updateGenreDto.name() != null)
+        if (updateGenreDto.name() != null) {
             genre.setName(updateGenreDto.name());
-        if (updateGenreDto.slug() != null)
+        }
+        if (updateGenreDto.slug() != null) {
             genre.setSlug(updateGenreDto.slug());
+        }
 
         return GenreMapper.INSTANCE.toGenreDto(genreRepository.save(genre));
     }

@@ -2,7 +2,6 @@ package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.dtos.author.AuthorDto;
 import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
-import com.github.togrul2.booklet.dtos.PaginationDto;
 import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.services.AuthorService;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,7 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -26,8 +27,8 @@ public class AuthorController {
     private final AuthorService authorService;
 
     @GetMapping
-    public Page<AuthorDto> getAuthors(@Valid PaginationDto paginationDto) {
-        return authorService.findAll(paginationDto.getPageNumber(), paginationDto.getPageSize());
+    public Page<AuthorDto> getAuthors(@ParameterObject Pageable pageable) {
+        return authorService.findAll(pageable);
     }
 
     @GetMapping("/{id}")

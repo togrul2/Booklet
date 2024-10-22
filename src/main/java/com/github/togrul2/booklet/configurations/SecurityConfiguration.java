@@ -58,6 +58,10 @@ public class SecurityConfiguration {
     private List<String> corsAllowedHeaders;
     @Value("${spring.security.cors.allowed-origin-patterns:*}")
     private List<String> corsAllowedOriginPatterns;
+    @Value("${springdoc.api-docs.path:/v3/api-docs}")
+    private String schemaUrl;
+    @Value("${springdoc.swagger-ui.path:/swagger-ui/index.html}")
+    private String swaggerUrl;
 
     @Bean
     UserDetailsService userDetailsService(UserRepository userRepository) {
@@ -78,7 +82,12 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(
                         request -> request
                                 // Allow all requests to /api/v1/auth/ methods such as login or refresh.
-                                .requestMatchers("/api/v1/auth/**")
+                                .requestMatchers(
+                                        "/api/v1/auth/**",
+                                        "/actuator/**",
+                                        schemaUrl,
+                                        swaggerUrl
+                                )
                                 .permitAll()
                                 .requestMatchers(HttpMethod.POST, "api/v1/users")
                                 .permitAll()

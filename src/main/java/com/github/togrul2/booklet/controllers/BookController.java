@@ -1,6 +1,5 @@
 package com.github.togrul2.booklet.controllers;
 
-import com.github.togrul2.booklet.dtos.PaginationDto;
 import com.github.togrul2.booklet.dtos.book.BookDto;
 import com.github.togrul2.booklet.dtos.book.CreateBookDto;
 import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
@@ -11,7 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -26,8 +27,8 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public Page<BookDto> getBooks(@Valid PaginationDto paginationDto) {
-        return bookService.findAll(paginationDto.getPageNumber(), paginationDto.getPageSize());
+    public Page<BookDto> getBooks(@ParameterObject Pageable pageable) {
+        return bookService.findAll(pageable);
     }
 
     @GetMapping("/{id}")

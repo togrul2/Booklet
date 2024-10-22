@@ -21,3 +21,9 @@ spring:
 server:
   error:
     include-stacktrace: on_param
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

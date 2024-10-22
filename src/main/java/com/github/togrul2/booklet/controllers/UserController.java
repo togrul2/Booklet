@@ -1,6 +1,5 @@
 package com.github.togrul2.booklet.controllers;
 
-import com.github.togrul2.booklet.dtos.PaginationDto;
 import com.github.togrul2.booklet.dtos.auth.TokenPairDto;
 import com.github.togrul2.booklet.dtos.user.CreateUserDto;
 import com.github.togrul2.booklet.dtos.user.UserDto;
@@ -12,7 +11,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +30,8 @@ public class UserController {
     private final AuthService authService;
 
     @GetMapping
-    public Page<UserDto> getAll(@Valid PaginationDto paginationDto) {
-        return userService.findAll(paginationDto.getPageNumber(), paginationDto.getPageSize());
+    public Page<UserDto> getAll(@ParameterObject Pageable pageable) {
+        return userService.findAll(pageable);
     }
 
     @GetMapping("/{id}")

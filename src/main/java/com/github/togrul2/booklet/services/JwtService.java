@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class JwtService {
     @Value("${spring.security.jwt.refresh-expiration:86400000}")
     private long refreshTokenExpiration;  // In milliseconds.
 
+    @NonNull
     private SecretKey getSecretKey() {
         byte[] decodedKey = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(decodedKey);
@@ -42,7 +44,7 @@ public class JwtService {
                 .getPayload();
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    private <T> T extractClaim(String token, @NonNull Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
@@ -55,7 +57,11 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    private String createToken(Map<String, Object> claims, UserDetails userDetails, long expiration) {
+    private String createToken(
+            Map<String, Object> claims,
+            @NonNull UserDetails userDetails,
+            long expiration
+    ) {
         final Date expirationDate = new Date(System.currentTimeMillis() + expiration);
         return Jwts
                 .builder()

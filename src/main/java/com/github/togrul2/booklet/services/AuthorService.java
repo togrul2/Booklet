@@ -8,10 +8,9 @@ import com.github.togrul2.booklet.exceptions.AuthorNotFound;
 import com.github.togrul2.booklet.mappers.AuthorMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import lombok.AllArgsConstructor;
-
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,29 +18,28 @@ import org.springframework.stereotype.Service;
 public class AuthorService {
     private final AuthorRepository authorRepository;
 
-    public Page<AuthorDto> findAll(int pageNumber, int pageSize) {
+    public Page<AuthorDto> findAll(Pageable pageable) {
         return authorRepository
-                .findAll(PageRequest.of(pageNumber - 1, pageSize))
+                .findAll(pageable)
                 .map(AuthorMapper.INSTANCE::toAuthorDto);
     }
 
     public AuthorDto findOneById(long id) {
-        return AuthorMapper.INSTANCE.toAuthorDto(
-                authorRepository
-                        .findById(id)
-                        .orElseThrow(AuthorNotFound::new)
-        );
+        Author author = authorRepository
+                .findById(id)
+                .orElseThrow(AuthorNotFound::new);
+        return AuthorMapper.INSTANCE.toAuthorDto(author);
     }
 
     public AuthorDto create(CreateAuthorDto createAuthorDto) {
-        return AuthorMapper.INSTANCE.toAuthorDto(
-                authorRepository.save(AuthorMapper.INSTANCE.toAuthor(createAuthorDto))
-        );
+        Author author = AuthorMapper.INSTANCE.toAuthor(createAuthorDto);
+        return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }
 
     public AuthorDto replace(long id, CreateAuthorDto createAuthorDto) {
-        if (!authorRepository.existsById(id))
+        if (!authorRepository.existsById(id)) {
             throw new AuthorNotFound();
+        }
 
         Author author = AuthorMapper.INSTANCE.toAuthor(createAuthorDto);
         author.setId(id);
@@ -53,20 +51,21 @@ public class AuthorService {
                 .findById(id)
                 .orElseThrow(AuthorNotFound::new);
 
-        if (updateAuthorDto.name() != null)
+        if (updateAuthorDto.name() != null) {
             author.setName(updateAuthorDto.name());
-
-        if (updateAuthorDto.surname() != null)
+        }
+        if (updateAuthorDto.surname() != null) {
             author.setSurname(updateAuthorDto.surname());
-
-        if (updateAuthorDto.birthDate() != null)
+        }
+        if (updateAuthorDto.birthDate() != null) {
             author.setBirthDate(updateAuthorDto.birthDate());
-
-        if (updateAuthorDto.deathDate() != null)
+        }
+        if (updateAuthorDto.deathDate() != null) {
             author.setDeathDate(updateAuthorDto.deathDate());
-
-        if (updateAuthorDto.biography() != null)
+        }
+        if (updateAuthorDto.biography() != null) {
             author.setBiography(updateAuthorDto.biography());
+        }
 
         return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }

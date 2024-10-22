@@ -9,8 +9,9 @@ import com.github.togrul2.booklet.exceptions.UserNotFound;
 import com.github.togrul2.booklet.mappers.UserMapper;
 import com.github.togrul2.booklet.repositories.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private void validateUniqueFields(CreateUserDto createUserDto) {
+    private void validateUniqueFields(@NonNull CreateUserDto createUserDto) {
         if (userRepository.existsByEmail(createUserDto.email()))
             throw new TakenAttributeException("Email already taken");
     }
@@ -33,9 +34,9 @@ public class UserService {
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 
-    public Page<UserDto> findAll(int pageNumber, int pageSize) {
+    public Page<UserDto> findAll(Pageable pageable) {
         return userRepository
-                .findAll(PageRequest.of(pageNumber - 1, pageSize))
+                .findAll(pageable)
                 .map(UserMapper.INSTANCE::toUserDto);
     }
 
