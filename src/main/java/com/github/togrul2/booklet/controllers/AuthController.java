@@ -4,7 +4,7 @@ import com.github.togrul2.booklet.dtos.auth.LoginDto;
 import com.github.togrul2.booklet.dtos.auth.RefreshRequestDto;
 import com.github.togrul2.booklet.dtos.auth.TokenPairDto;
 import com.github.togrul2.booklet.services.AuthService;
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Tag(name = "Auth")
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 public class AuthController {
