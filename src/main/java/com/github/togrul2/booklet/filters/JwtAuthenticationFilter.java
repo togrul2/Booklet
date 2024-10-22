@@ -1,4 +1,4 @@
-package com.github.togrul2.booklet.misc;
+package com.github.togrul2.booklet.filters;
 
 import com.github.togrul2.booklet.entities.Role;
 import com.github.togrul2.booklet.services.JwtService;

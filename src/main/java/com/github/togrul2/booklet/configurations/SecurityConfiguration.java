@@ -1,17 +1,21 @@
 package com.github.togrul2.booklet.configurations;
 
+import com.github.togrul2.booklet.filters.JwtAuthenticationFilter;
+import com.github.togrul2.booklet.repositories.TokenRepository;
 import com.github.togrul2.booklet.repositories.UserRepository;
-import com.github.togrul2.booklet.misc.JwtAuthenticationFilter;
-import com.github.togrul2.booklet.misc.JwtLogoutHandler;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,6 +23,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -57,7 +63,7 @@ public class SecurityConfiguration {
     UserDetailsService userDetailsService(UserRepository userRepository) {
         return email -> userRepository
                 .findByEmail(email)
-                .orElseThrow(() ->  new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     @Bean
@@ -107,5 +113,28 @@ public class SecurityConfiguration {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+}
+
+@Component
+@RequiredArgsConstructor
+class JwtLogoutHandler implements LogoutHandler {
+    private final TokenRepository tokenRepository;
+
+    @Override
+    public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return;
+        }
+
+        final String jwtToken = authHeader.substring(7);
+        tokenRepository
+                .findByToken(jwtToken)
+                .ifPresent(token -> {
+                    token.setActive(false);
+                    tokenRepository.save(token);
+                    SecurityContextHolder.clearContext();
+                });
     }
 }
