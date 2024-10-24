@@ -6,10 +6,10 @@ import com.github.togrul2.booklet.dtos.auth.TokenPairDto;
 import com.github.togrul2.booklet.entities.Token;
 import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.repositories.TokenRepository;
-import com.github.togrul2.booklet.repositories.UserRepository;
 import io.jsonwebtoken.JwtException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,14 +18,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
     private final JwtService jwtService;
-    private final UserRepository userRepository;
+    private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final TokenRepository tokenRepository;
 
     public TokenPairDto login(@NonNull LoginDto loginDto) {
-        User user = userRepository
-                .findByEmail(loginDto.email())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = (User) userDetailsService.loadUserByUsername(loginDto.email());
 
         if (!passwordEncoder.matches(loginDto.password(), user.getPassword())) {
             throw new UsernameNotFoundException("User not found");
@@ -33,7 +31,7 @@ public class AuthService {
 
         Token refreshToken = Token
                 .builder()
-                .token(jwtService.createRefreshToken(user))
+                .token(jwtService.createRefreshToken(user, user.getRole()))
                 .user(user)
                 .active(true)
                 .build();
@@ -41,55 +39,60 @@ public class AuthService {
 
         return TokenPairDto
                 .builder()
-                .accessToken(jwtService.createAccessToken(user))
+                .accessToken(jwtService.createAccessToken(user, user.getRole()))
                 .refreshToken(refreshToken.getToken())
                 .build();
     }
 
     public TokenPairDto refresh(@NonNull RefreshRequestDto refreshTokenDto) {
-        boolean isTokenActive = tokenRepository.isTokenActive(refreshTokenDto.refreshToken());
-        if (jwtService.isRefreshTokenValid(refreshTokenDto.refreshToken()) && !isTokenActive) {
-            throw new JwtException("Bad refresh token");
-        }
+        validate(refreshTokenDto);
+        final String refreshToken = refreshTokenDto.refreshToken();
 
-        String email = jwtService.extractUsername(refreshTokenDto.refreshToken());
-        User user = userRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = (User) userDetailsService.loadUserByUsername(
+                jwtService.extractUsername(refreshToken)
+        );
 
         return TokenPairDto
                 .builder()
-                .accessToken(jwtService.createAccessToken(user))
-                .refreshToken(jwtService.createRefreshToken(user))
+                .accessToken(jwtService.createAccessToken(user, user.getRole()))
+                .refreshToken(jwtService.createRefreshToken(user, user.getRole()))
                 .build();
     }
 
     public void validate(@NonNull RefreshRequestDto refreshRequestDto) {
         final String refreshToken = refreshRequestDto.refreshToken();
-        if (
-                jwtService.isRefreshTokenValid(refreshToken) ||
-                        !tokenRepository.isTokenActive(refreshToken)
-        ) {
+        final boolean isTokenActive = tokenRepository
+                .findByToken(refreshToken)
+                .map(Token::isActive)
+                .orElse(false);
+        if (!jwtService.isRefreshToken(refreshToken) || !isTokenActive) {
             throw new JwtException("Bad refresh token");
         }
     }
 
     public TokenPairDto createTokenPairs(String email) {
-        User user = userRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = (User) userDetailsService.loadUserByUsername(email);
 
         Token refreshToken = Token
                 .builder()
-                .token(jwtService.createRefreshToken(user))
+                .token(jwtService.createRefreshToken(user, user.getRole()))
                 .user(user)
                 .active(true)
                 .build();
 
         return TokenPairDto
                 .builder()
-                .accessToken(jwtService.createAccessToken(user))
+                .accessToken(jwtService.createAccessToken(user, user.getRole()))
                 .refreshToken(refreshToken.getToken())
                 .build();
+    }
+
+    public void logout(@NonNull RefreshRequestDto refreshRequestDto) {
+        String refreshToken = refreshRequestDto.refreshToken();
+        tokenRepository.findByToken(refreshToken)
+                .ifPresent(token -> {
+                    token.setActive(false);
+                    tokenRepository.save(token);
+                });
     }
 }

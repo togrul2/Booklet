@@ -33,4 +33,9 @@ public class AuthController {
     public void validate(@RequestBody @Valid RefreshRequestDto refreshRequestDto) {
         authService.validate(refreshRequestDto);
     }
+
+    @PostMapping("/logout")
+    public void logout(@RequestBody @Valid RefreshRequestDto refreshRequestDto) {
+        authService.logout(refreshRequestDto);
+    }
 }

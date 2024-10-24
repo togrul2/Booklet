@@ -22,8 +22,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     private void validateUniqueFields(@NonNull CreateUserDto createUserDto) {
-        if (userRepository.existsByEmail(createUserDto.email()))
+        if (userRepository.existsByEmail(createUserDto.email())) {
             throw new TakenAttributeException("Email already taken");
+        }
     }
 
     public UserDto register(CreateUserDto createUserDto) {

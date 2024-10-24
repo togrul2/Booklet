@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,41 +33,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        if (request.getServletPath().contains(AUTH_PATH)) {
+        try {
+            if (request.getServletPath().contains(AUTH_PATH)) {
+                return;
+            }
+
+            final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return;
+            }
+
+            final String jwtToken = authHeader.substring(7);
+            final String userEmail = jwtService.extractUsername(jwtToken);
+            final Role role = jwtService.extractRole(jwtToken);
+            final SecurityContext content = SecurityContextHolder.getContext();
+            final Authentication authentication = content.getAuthentication();
+
+            if (userEmail == null || authentication != null) {
+                return;
+            }
+
+            // This way we avoid hitting the database each time we need to authenticate a user,
+            // since all necessary user info is in jwt token.
+            UserDetails userDetails = User
+                    .builder()
+                    .username(userEmail)
+                    .password("")
+                    .roles(role.name())
+                    .authorities(role.getAuthorities())
+                    .build();
+
+            if (jwtService.isAccessToken(jwtToken)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities()
+                );
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                content.setAuthentication(authToken);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }finally {
             filterChain.doFilter(request, response);
-            return;
-        }
-
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        final String jwtToken = authHeader.substring(7);
-        final String userEmail = jwtService.extractUsername(jwtToken);
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (userEmail == null || authentication != null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // This way we avoid hitting the database each time we need to authenticate a user,
-        // since all necessary user info is in jwt token.
-        UserDetails userDetails = User
-                .builder()
-                .username(userEmail)
-                .password("")
-                .authorities(Role.USER.getAuthorities())
-                .build();
-
-        if (jwtService.isAccessTokenValid(jwtToken)) {
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities()
-            );
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
         }
     }
 }

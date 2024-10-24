@@ -1,5 +1,6 @@
 package com.github.togrul2.booklet.services;
 
+import com.github.togrul2.booklet.entities.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -53,8 +54,12 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    public Role extractRole(String jwtToken) {
+        return extractClaim(jwtToken, claims -> Role.valueOf((String) claims.get("role")));
+    }
+
+    private TokenType extractTokenType(String token) {
+        return extractClaim(token, claims -> TokenType.valueOf((String) claims.get("type")));
     }
 
     private String createToken(
@@ -69,46 +74,33 @@ public class JwtService {
                 .type("JWT")
                 .and()
                 .subject(userDetails.getUsername())
-                // FIXME: fix wrong expiration.
                 .claims(claims)
                 .expiration(expirationDate)
                 .signWith(getSecretKey())
                 .compact();
     }
 
-    public boolean isAccessTokenValid(String token) {
-        return isTokenValid(token) && isAccessToken(token);
-    }
-
-    public boolean isRefreshTokenValid(String token) {
-        return isTokenValid(token) && isRefreshToken(token);
-    }
-
-    /**
-     * Check if the token is expired.
-     *
-     * @param token JWT token.
-     * @return True if the token is not expired, false otherwise.
-     */
-    public boolean isTokenValid(String token) {
-        return !extractExpiration(token).before(new Date(System.currentTimeMillis()));
-    }
-
-    public String createAccessToken(UserDetails userDetails) {
-        Map<String, Object> claims = Map.of("type", TokenType.ACCESS);
-        return createToken(claims, userDetails, accessTokenExpiration);
-    }
-
     public boolean isAccessToken(String token) {
-        return extractClaim(token, claims -> claims.get("type")).equals(TokenType.ACCESS);
+        return extractTokenType(token).equals(TokenType.ACCESS);
     }
 
     public boolean isRefreshToken(String token) {
-        return extractClaim(token, claims -> claims.get("type")).equals(TokenType.REFRESH);
+        return extractTokenType(token).equals(TokenType.REFRESH);
     }
 
-    public String createRefreshToken(UserDetails userDetails) {
-        Map<String, Object> claims = Map.of("type", TokenType.REFRESH);
+    public String createAccessToken(UserDetails userDetails, Role role) {
+        Map<String, Object> claims = Map.ofEntries(
+                Map.entry("type", TokenType.ACCESS),
+                Map.entry("role", role)
+        );
+        return createToken(claims, userDetails, accessTokenExpiration);
+    }
+
+    public String createRefreshToken(UserDetails userDetails, Role role) {
+        Map<String, Object> claims = Map.ofEntries(
+                Map.entry("type", TokenType.REFRESH),
+                Map.entry("role", role)
+        );
         return createToken(claims, userDetails, refreshTokenExpiration);
     }
 }
