@@ -48,7 +48,7 @@ public class AuthorServiceTests {
         Mockito
                 .when(authorRepository.findAll(PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(authors));
-        Page<AuthorDto> authors = authorService.findAll(1, 10);
+        Page<AuthorDto> authors = authorService.findAll(PageRequest.of(0, 10));
         Mockito
                 .verify(authorRepository, Mockito.times(1))
                 .findAll(PageRequest.of(0, 10));

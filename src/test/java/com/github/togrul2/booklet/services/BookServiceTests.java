@@ -72,7 +72,7 @@ public class BookServiceTests {
         Mockito
                 .when(bookRepository.findAll(PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(books));
-        Page<BookDto> result = bookService.findAll(1, 10);
+        Page<BookDto> result = bookService.findAll(PageRequest.of(0, 10));
         // Verify that the method findAll() of bookRepository was called once.
         Assertions.assertNotNull(result);
         Assertions.assertEquals(1, result.getTotalElements());
