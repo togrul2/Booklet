@@ -1,6 +1,8 @@
 package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.dtos.user.CreateUserDto;
+import com.github.togrul2.booklet.dtos.user.PartialUpdateUserDto;
+import com.github.togrul2.booklet.dtos.user.UpdateUserDto;
 import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.entities.Role;
 import com.github.togrul2.booklet.entities.User;
@@ -27,6 +29,21 @@ public class UserService {
         }
     }
 
+    private void validateUniqueFields(@NonNull UpdateUserDto createUserDto, Long userId) {
+        if (userRepository.existsByEmailAndIdNot(createUserDto.email(), userId)) {
+            throw new TakenAttributeException("Email already taken");
+        }
+    }
+
+    private void validateUniqueFields(@NonNull PartialUpdateUserDto partialUpdateUserDto, Long userId) {
+        if (
+                partialUpdateUserDto.email() != null &&
+                        userRepository.existsByEmailAndIdNot(partialUpdateUserDto.email(), userId)
+        ) {
+            throw new TakenAttributeException("Email already taken");
+        }
+    }
+
     public UserDto register(CreateUserDto createUserDto) {
         validateUniqueFields(createUserDto);
         User user = UserMapper.INSTANCE.toUser(createUserDto);
@@ -45,5 +62,35 @@ public class UserService {
         return userRepository.findById(id)
                 .map(UserMapper.INSTANCE::toUserDto)
                 .orElseThrow(UserNotFound::new);
+    }
+
+    public UserDto replace(long userId, UpdateUserDto updateUserDto) {
+        validateUniqueFields(updateUserDto, userId);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFound::new);
+        user.setEmail(updateUserDto.email());
+        user.setFirstName(updateUserDto.firstName());
+        user.setLastName(updateUserDto.lastName());
+        user = userRepository.save(user);
+        return UserMapper.INSTANCE.toUserDto(user);
+    }
+
+    public UserDto update(long userId, PartialUpdateUserDto partialUpdateUserDto) {
+        validateUniqueFields(partialUpdateUserDto, userId);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFound::new);
+        if (partialUpdateUserDto.email() != null) {
+            user.setEmail(partialUpdateUserDto.email());
+        }
+        if (partialUpdateUserDto.firstName() != null) {
+            user.setFirstName(partialUpdateUserDto.firstName());
+        }
+        if (partialUpdateUserDto.lastName() != null) {
+            user.setLastName(partialUpdateUserDto.lastName());
+        }
+        user = userRepository.save(user);
+        return UserMapper.INSTANCE.toUserDto(user);
+    }
+
+    public void delete(long userId) {
+        userRepository.deleteById(userId);
     }
 }

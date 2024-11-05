@@ -2,6 +2,8 @@ package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.dtos.auth.TokenPairDto;
 import com.github.togrul2.booklet.dtos.user.CreateUserDto;
+import com.github.togrul2.booklet.dtos.user.PartialUpdateUserDto;
+import com.github.togrul2.booklet.dtos.user.UpdateUserDto;
 import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.services.AuthService;
 import com.github.togrul2.booklet.services.UserService;
@@ -15,6 +17,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -39,6 +42,7 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "User found"),
         @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json")),
     })
+    @PreAuthorize("hasRole('ADMIN')")
     public UserDto getById(@PathVariable long id) {
         return userService.findById(id);
     }
@@ -69,5 +73,26 @@ public class UserController {
     @GetMapping("/me")
     public UserDto getAuthUser(@AuthenticationPrincipal Long userId) {
         return userService.findById(userId);
+    }
+
+    @PutMapping("/me")
+    public UserDto replaceAuthUser(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid UpdateUserDto updateUserDto
+    ) {
+        return userService.replace(userId, updateUserDto);
+    }
+
+    @PatchMapping("/me")
+    public UserDto updateAuthUser(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid PartialUpdateUserDto partialUpdateUserDto
+    ) {
+        return userService.update(userId, partialUpdateUserDto);
+    }
+
+    @DeleteMapping("/me")
+    public void deleteAuthUser(@AuthenticationPrincipal Long userId) {
+        userService.delete(userId);
     }
 }

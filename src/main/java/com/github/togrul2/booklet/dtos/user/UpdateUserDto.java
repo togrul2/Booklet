@@ -1,16 +1,17 @@
-package com.github.togrul2.booklet.dtos.auth;
+package com.github.togrul2.booklet.dtos.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 
-@Builder
-public record LoginDto(
+public record UpdateUserDto(
         @Email
         String email,
-        @NotNull
         @NotBlank
-        String password
+        @NotNull
+        String firstName,
+        @NotBlank
+        @NotNull
+        String lastName
 ) {
 }

@@ -1,11 +1,16 @@
 package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.entities.Role;
+import com.github.togrul2.booklet.entities.Token;
+import com.github.togrul2.booklet.entities.User;
+import com.github.togrul2.booklet.repositories.TokenRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -22,7 +27,9 @@ enum TokenType {
 }
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
+    private final TokenRepository tokenRepository;
     @Value("${spring.security.jwt.secret-key}")
     private String secretKey;
     @Value("${spring.security.jwt.access-expiration:300000}")
@@ -88,6 +95,23 @@ public class JwtService {
         return extractTokenType(token).equals(TokenType.REFRESH);
     }
 
+    /**
+     * Validates the refresh token. Checks if the token is a refresh token and if it is active.
+     *
+     * @param refreshToken The refresh token to validate.
+     * @throws JwtException If the token is not a refresh token or if it is not active.
+     */
+    public void validateRefreshToken(String refreshToken) {
+        final boolean isTokenActive = tokenRepository
+                .findByToken(refreshToken)
+                .map(Token::isActive)
+                .orElse(false);
+
+        if (!isRefreshToken(refreshToken) || !isTokenActive) {
+            throw new JwtException("Bad refresh token");
+        }
+    }
+
     public String createAccessToken(UserDetails userDetails, Role role) {
         Map<String, Object> claims = Map.ofEntries(
                 Map.entry("type", TokenType.ACCESS),
@@ -102,5 +126,32 @@ public class JwtService {
                 Map.entry("role", role)
         );
         return createToken(claims, userDetails, refreshTokenExpiration);
+    }
+
+    public Token createAndStoreRefreshToken(User user, Role role) {
+        String refreshToken = createRefreshToken(user, role);
+        Token token = Token
+                .builder()
+                .user(user)
+                .token(refreshToken)
+                .active(true)
+                .build();
+        return tokenRepository.save(token);
+    }
+
+    /**
+     * Validates and sets the token as inactive so it cannot be used anymore.
+     *
+     * @param refreshToken The refresh token to set as inactive. Must be an active refresh token.
+     * @throws JwtException If the token is not a refresh token or if it is not active.
+     */
+    public void deactivateRefreshToken(String refreshToken) {
+        validateRefreshToken(refreshToken);
+        tokenRepository.findByToken(refreshToken).ifPresent(
+                token -> {
+                    token.setActive(false);
+                    tokenRepository.save(token);
+                }
+        );
     }
 }

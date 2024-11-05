@@ -5,8 +5,6 @@ import com.github.togrul2.booklet.dtos.auth.RefreshRequestDto;
 import com.github.togrul2.booklet.dtos.auth.TokenPairDto;
 import com.github.togrul2.booklet.entities.Token;
 import com.github.togrul2.booklet.entities.User;
-import com.github.togrul2.booklet.repositories.TokenRepository;
-import io.jsonwebtoken.JwtException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,7 +18,6 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
-    private final TokenRepository tokenRepository;
 
     public TokenPairDto login(@NonNull LoginDto loginDto) {
         User user = (User) userDetailsService.loadUserByUsername(loginDto.email());
@@ -29,14 +26,7 @@ public class AuthService {
             throw new UsernameNotFoundException("User not found");
         }
 
-        Token refreshToken = Token
-                .builder()
-                .token(jwtService.createRefreshToken(user, user.getRole()))
-                .user(user)
-                .active(true)
-                .build();
-        tokenRepository.save(refreshToken);
-
+        Token refreshToken = jwtService.createAndStoreRefreshToken(user, user.getRole());
         return TokenPairDto
                 .builder()
                 .accessToken(jwtService.createAccessToken(user, user.getRole()))
@@ -44,30 +34,28 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Creates new token pairs for the user. Used refresh token is deactivated and cannot be used again.
+     *
+     * @param refreshTokenDto Dto containing refresh token.
+     * @return TokenPairDto containing new access and refresh tokens.
+     */
     public TokenPairDto refresh(@NonNull RefreshRequestDto refreshTokenDto) {
-        validate(refreshTokenDto);
         final String refreshToken = refreshTokenDto.refreshToken();
+
+        // Validate refresh token and set it as inactive so it cannot be used anymore.
+        jwtService.deactivateRefreshToken(refreshToken);
 
         User user = (User) userDetailsService.loadUserByUsername(
                 jwtService.extractUsername(refreshToken)
         );
 
+        Token newRefreshToken = jwtService.createAndStoreRefreshToken(user, user.getRole());
         return TokenPairDto
                 .builder()
                 .accessToken(jwtService.createAccessToken(user, user.getRole()))
-                .refreshToken(jwtService.createRefreshToken(user, user.getRole()))
+                .refreshToken(newRefreshToken.getToken())
                 .build();
-    }
-
-    public void validate(@NonNull RefreshRequestDto refreshRequestDto) {
-        final String refreshToken = refreshRequestDto.refreshToken();
-        final boolean isTokenActive = tokenRepository
-                .findByToken(refreshToken)
-                .map(Token::isActive)
-                .orElse(false);
-        if (!jwtService.isRefreshToken(refreshToken) || !isTokenActive) {
-            throw new JwtException("Bad refresh token");
-        }
     }
 
     public TokenPairDto createTokenPairs(String email) {
@@ -88,11 +76,10 @@ public class AuthService {
     }
 
     public void logout(@NonNull RefreshRequestDto refreshRequestDto) {
-        String refreshToken = refreshRequestDto.refreshToken();
-        tokenRepository.findByToken(refreshToken)
-                .ifPresent(token -> {
-                    token.setActive(false);
-                    tokenRepository.save(token);
-                });
+        jwtService.deactivateRefreshToken(refreshRequestDto.refreshToken());
+    }
+
+    public void validate(@NonNull RefreshRequestDto refreshRequestDto) {
+        jwtService.validateRefreshToken(refreshRequestDto.refreshToken());
     }
 }
