@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,6 +22,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * Security configuration class, which is responsible for configuring security.
+ * Authorization is configured per method and is not present in this class.
+ * Csrf, cors, session management and password encoding related beans are configured here.
+ *
+ * @version 1.0
+ * @since 1.0
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -65,49 +72,6 @@ public class SecurityConfiguration {
         return httpSecurity
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.ignoringRequestMatchers(IGNORED_CSRF_PATHS))
-                .authorizeHttpRequests(
-                        request -> request
-                                // Allow all requests to /api/v1/auth/ methods such as login or refresh.
-                                .requestMatchers(
-                                        "/api/v1/auth/**",
-                                        "/actuator/**",
-                                        "/v3/api-docs",
-                                        "/v3/api-docs/**",
-                                        "/swagger-ui/**",
-                                        "/error"
-                                )
-                                .permitAll()
-                                .requestMatchers(HttpMethod.POST, "api/v1/users")
-                                .permitAll()
-                                // Move to per method security.
-                                .requestMatchers(
-                                        HttpMethod.GET,
-                                        "/api/v1/authors",
-                                        "/api/v1/authors/**",
-                                        "/api/v1/books",
-                                        "/api/v1/books/**",
-                                        "/api/v1/genres",
-                                        "/api/v1/genres/**"
-                                )
-                                .permitAll()
-                                .requestMatchers(
-                                        "/api/v1/authors",
-                                        "/api/v1/authors/**",
-                                        "/api/v1/books",
-                                        "/api/v1/books/**",
-                                        "/api/v1/genres",
-                                        "/api/v1/genres/**"
-                                )
-                                .hasRole("ADMIN")
-                                .requestMatchers(
-                                        HttpMethod.GET,
-                                        "/api/v1/users",
-                                        "/api/v1/users/**"
-                                )
-                                .hasRole("ADMIN")
-                                .anyRequest()
-                                .authenticated()
-                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

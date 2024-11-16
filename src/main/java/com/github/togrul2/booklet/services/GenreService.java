@@ -4,7 +4,6 @@ import com.github.togrul2.booklet.dtos.genre.CreateGenreDto;
 import com.github.togrul2.booklet.dtos.genre.GenreDto;
 import com.github.togrul2.booklet.dtos.genre.UpdateGenreDto;
 import com.github.togrul2.booklet.entities.Genre;
-import com.github.togrul2.booklet.exceptions.TakenAttributeException;
 import com.github.togrul2.booklet.exceptions.GenreNotFound;
 import com.github.togrul2.booklet.mappers.GenreMapper;
 import com.github.togrul2.booklet.repositories.GenreRepository;
@@ -33,28 +32,28 @@ public class GenreService {
     private void validateGenreData(@NonNull CreateGenreDto createGenreDto) {
         // TODO: Throw multiple errors, not one by one like now.
         if (genreRepository.existsByName(createGenreDto.name())) {
-            throw new TakenAttributeException("Genre with this name already exists");
+            throw new IllegalArgumentException("Genre with this name already exists");
         }
         if (genreRepository.existsBySlug(createGenreDto.slug())) {
-            throw new TakenAttributeException("Genre with this slug already exists");
+            throw new IllegalArgumentException("Genre with this slug already exists");
         }
     }
 
     private void validateGenreData(@NonNull CreateGenreDto createGenreDto, long id) {
         if (genreRepository.existsByNameAndIdNot(createGenreDto.name(), id)) {
-            throw new TakenAttributeException("Genre with this name already exists");
+            throw new IllegalArgumentException("Genre with this name already exists");
         }
         if (genreRepository.existsBySlugAndIdNot(createGenreDto.slug(), id)) {
-            throw new TakenAttributeException("Genre with this slug already exists");
+            throw new IllegalArgumentException("Genre with this slug already exists");
         }
     }
 
     private void validateGenreData(@NonNull UpdateGenreDto updateGenreDto, long id) {
         if ((updateGenreDto.name() != null) && genreRepository.existsByNameAndIdNot(updateGenreDto.name(), id)) {
-            throw new TakenAttributeException("Genre with this name already exists");
+            throw new IllegalArgumentException("Genre with this name already exists");
         }
         if ((updateGenreDto.slug() != null) && genreRepository.existsBySlugAndIdNot(updateGenreDto.slug(), id)) {
-            throw new TakenAttributeException("Genre with this slug already exists");
+            throw new IllegalArgumentException("Genre with this slug already exists");
         }
     }
 

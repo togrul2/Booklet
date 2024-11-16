@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -33,18 +34,24 @@ public class UserController {
     private final AuthService authService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public Page<UserDto> getAll(@ParameterObject Pageable pageable) {
         return userService.findAll(pageable);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{idOrEmail}")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User found"),
         @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json")),
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public UserDto getById(@PathVariable long id) {
-        return userService.findById(id);
+    public UserDto getById(@PathVariable String idOrEmail) {
+        // TODO: think of something better.
+        try {
+            return userService.findById(Long.parseLong(idOrEmail));
+        } catch (NumberFormatException e) {
+            return userService.findByEmail(idOrEmail);
+        }
     }
 
     @PostMapping
@@ -71,28 +78,28 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public UserDto getAuthUser(@AuthenticationPrincipal Long userId) {
-        return userService.findById(userId);
+    public UserDto getAuthUser(@AuthenticationPrincipal UserDetails userDetails) {
+        return userService.findByEmail(userDetails.getUsername());
     }
 
     @PutMapping("/me")
     public UserDto replaceAuthUser(
-            @AuthenticationPrincipal Long userId,
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody @Valid UpdateUserDto updateUserDto
     ) {
-        return userService.replace(userId, updateUserDto);
+        return userService.replace(userDetails.getUsername(), updateUserDto);
     }
 
     @PatchMapping("/me")
     public UserDto updateAuthUser(
-            @AuthenticationPrincipal Long userId,
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody @Valid PartialUpdateUserDto partialUpdateUserDto
     ) {
-        return userService.update(userId, partialUpdateUserDto);
+        return userService.update(userDetails.getUsername(), partialUpdateUserDto);
     }
 
     @DeleteMapping("/me")
-    public void deleteAuthUser(@AuthenticationPrincipal Long userId) {
-        userService.delete(userId);
+    public void deleteAuthUser(@AuthenticationPrincipal UserDetails userDetails) {
+        userService.delete(userDetails.getUsername());
     }
 }

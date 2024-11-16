@@ -3,7 +3,6 @@ package com.github.togrul2.booklet.services;
 import com.github.togrul2.booklet.dtos.user.CreateUserDto;
 import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.entities.User;
-import com.github.togrul2.booklet.exceptions.TakenAttributeException;
 import com.github.togrul2.booklet.exceptions.UserNotFound;
 import com.github.togrul2.booklet.repositories.UserRepository;
 import org.junit.jupiter.api.Assertions;
@@ -86,7 +85,7 @@ public class UserServiceTests {
                 .when(userRepository.existsByEmail(Mockito.anyString()))
                 .thenReturn(true);
 
-        Assertions.assertThrows(TakenAttributeException.class, () -> userService.register(createUserDto));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> userService.register(createUserDto));
         Mockito
                 .verify(userRepository, Mockito.times(1))
                 .existsByEmail(Mockito.anyString());

@@ -5,7 +5,6 @@ import com.github.togrul2.booklet.dtos.genre.GenreDto;
 import com.github.togrul2.booklet.dtos.genre.UpdateGenreDto;
 import com.github.togrul2.booklet.entities.Genre;
 import com.github.togrul2.booklet.exceptions.GenreNotFound;
-import com.github.togrul2.booklet.exceptions.TakenAttributeException;
 import com.github.togrul2.booklet.mappers.GenreMapper;
 import com.github.togrul2.booklet.repositories.GenreRepository;
 import org.junit.jupiter.api.Assertions;
@@ -104,7 +103,7 @@ public class GenreServiceTests {
                 .thenReturn(true);
 
         Assertions.assertThrows(
-                TakenAttributeException.class,
+                IllegalArgumentException.class,
                 () -> genreService.create(new CreateGenreDto("Test genre", "test-genre"))
         );
         Mockito
@@ -128,7 +127,7 @@ public class GenreServiceTests {
                 .thenReturn(true);
 
         Assertions.assertThrows(
-                TakenAttributeException.class,
+                IllegalArgumentException.class,
                 () -> genreService.create(new CreateGenreDto("Test genre", "test-genre"))
         );
         Mockito
@@ -213,7 +212,7 @@ public class GenreServiceTests {
                 .thenReturn(true);
 
         Assertions.assertThrows(
-                TakenAttributeException.class,
+                IllegalArgumentException.class,
                 () -> genreService.replace(genre.getId(), createGenreDto)
         );
         Mockito
@@ -242,7 +241,7 @@ public class GenreServiceTests {
                 .thenReturn(true);
 
         Assertions.assertThrows(
-                TakenAttributeException.class,
+                IllegalArgumentException.class,
                 () -> genreService.replace(genre.getId(), createGenreDto)
         );
         Mockito
@@ -295,7 +294,7 @@ public class GenreServiceTests {
                 .thenReturn(true);
 
         Assertions.assertThrows(
-                TakenAttributeException.class,
+                IllegalArgumentException.class,
                 () -> genreService.update(genre.getId(), new UpdateGenreDto("Test name", "test-name"))
         );
 
@@ -323,7 +322,7 @@ public class GenreServiceTests {
                 .thenReturn(true);
 
         Assertions.assertThrows(
-                TakenAttributeException.class,
+                IllegalArgumentException.class,
                 () -> genreService.update(genre.getId(), new UpdateGenreDto("Test genre", "test-genre"))
         );
 

@@ -24,6 +24,8 @@ public class JwtServiceTests {
         ReflectionTestUtils.setField(
                 jwtService, "secretKey", "bxBWG9rIQcquX1UubhgI5lIqF4B6+N0GBBN5v/eCSss="
         );
+        ReflectionTestUtils.setField(jwtService, "accessTokenExpiration", 300000);
+        ReflectionTestUtils.setField(jwtService, "refreshTokenExpiration", 86400000);
         user = User.builder()
                 .username(username)
                 .password("dummypassword")

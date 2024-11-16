@@ -16,15 +16,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-
-enum TokenType {
-    ACCESS,
-    REFRESH
-}
 
 @Service
 @RequiredArgsConstructor
@@ -70,10 +67,12 @@ public class JwtService {
     }
 
     private String createToken(
-            Map<String, Object> claims,
+            @NonNull HashMap<String, Object> claims,
             @NonNull UserDetails userDetails,
             long expiration
     ) {
+        // To make the token unique, we use the current time in milliseconds.
+        claims.put("uid", Instant.now().toEpochMilli());
         final Date expirationDate = new Date(System.currentTimeMillis() + expiration);
         return Jwts
                 .builder()
@@ -96,7 +95,8 @@ public class JwtService {
     }
 
     /**
-     * Validates the refresh token. Checks if the token is a refresh token and if it is active.
+     * Validates the refresh token. Fetches token from the database,
+     * then checks if the token is a refresh token and if it is active.
      *
      * @param refreshToken The refresh token to validate.
      * @throws JwtException If the token is not a refresh token or if it is not active.
@@ -112,18 +112,35 @@ public class JwtService {
         }
     }
 
+    /**
+     * Validates the refresh token. Checks if the token is a refresh token and if it is active.
+     * This method should be used when the token entity is available to avoid repetitive database queries.
+     *
+     * @param token The refresh token to validate.
+     * @throws JwtException If the token is not a refresh token or if it is not active.
+     */
+    private void validateRefreshToken(@NonNull Token token) {
+        if (!isRefreshToken(token.getToken()) || !token.isActive()) {
+            throw new JwtException("Bad refresh token");
+        }
+    }
+
     public String createAccessToken(UserDetails userDetails, Role role) {
-        Map<String, Object> claims = Map.ofEntries(
+        HashMap<String, Object> claims = new HashMap<>(
+            Map.ofEntries(
                 Map.entry("type", TokenType.ACCESS),
                 Map.entry("role", role)
+            )
         );
         return createToken(claims, userDetails, accessTokenExpiration);
     }
 
     public String createRefreshToken(UserDetails userDetails, Role role) {
-        Map<String, Object> claims = Map.ofEntries(
+        HashMap<String, Object> claims = new HashMap<>(
+            Map.ofEntries(
                 Map.entry("type", TokenType.REFRESH),
                 Map.entry("role", role)
+            )
         );
         return createToken(claims, userDetails, refreshTokenExpiration);
     }
@@ -140,18 +157,22 @@ public class JwtService {
     }
 
     /**
-     * Validates and sets the token as inactive so it cannot be used anymore.
+     * Validates and sets the matching token in the database as inactive so it cannot be used anymore.
      *
      * @param refreshToken The refresh token to set as inactive. Must be an active refresh token.
      * @throws JwtException If the token is not a refresh token or if it is not active.
      */
     public void deactivateRefreshToken(String refreshToken) {
-        validateRefreshToken(refreshToken);
-        tokenRepository.findByToken(refreshToken).ifPresent(
-                token -> {
-                    token.setActive(false);
-                    tokenRepository.save(token);
-                }
-        );
+        Token token = tokenRepository
+                .findByToken(refreshToken)
+                .orElseThrow(() -> new JwtException("Bad refresh token"));
+
+        validateRefreshToken(token);
+        token.setActive(false);
+        tokenRepository.save(token);
+    }
+
+    private enum TokenType {
+        ACCESS, REFRESH
     }
 }

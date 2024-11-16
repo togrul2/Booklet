@@ -7,7 +7,6 @@ import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Genre;
 import com.github.togrul2.booklet.exceptions.BookNotFound;
-import com.github.togrul2.booklet.exceptions.TakenAttributeException;
 import com.github.togrul2.booklet.mappers.BookMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
@@ -146,7 +145,7 @@ public class BookServiceTests {
                 .when(bookRepository.existsByIsbn(book.getIsbn()))
                 .thenReturn(true);
         Assertions.assertThrows(
-                TakenAttributeException.class,
+                IllegalArgumentException.class,
                 () -> bookService.create(
                         CreateBookDto
                                 .builder()
@@ -248,7 +247,7 @@ public class BookServiceTests {
                 .when(bookRepository.existsByIsbnAndIdNot(createBookDto.isbn(), book.getId()))
                 .thenReturn(true);
 
-        Assertions.assertThrows(TakenAttributeException.class, () -> bookService.replace(book.getId(), createBookDto));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> bookService.replace(book.getId(), createBookDto));
         Mockito
                 .verify(bookRepository, Mockito.times(1))
                 .existsById(book.getId());
@@ -310,7 +309,7 @@ public class BookServiceTests {
                 .thenReturn(true);
 
         Assertions.assertThrows(
-                TakenAttributeException.class,
+                IllegalArgumentException.class,
                 () -> bookService.update(
                         book.getId(),
                         UpdateBookDto.builder().isbn("1234567890").build()

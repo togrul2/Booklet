@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -43,6 +44,7 @@ public class GenreController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Genre created"),
             @ApiResponse(
@@ -67,6 +69,7 @@ public class GenreController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Genre created"),
             @ApiResponse(
@@ -85,6 +88,7 @@ public class GenreController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Genre created"),
             @ApiResponse(
@@ -103,6 +107,7 @@ public class GenreController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponse(responseCode = "204", description = "Genre deleted")
     public ResponseEntity<Void> deleteGenre(@PathVariable long id) {
         genreService.delete(id);
