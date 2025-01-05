@@ -1,5 +1,6 @@
 package com.github.togrul2.booklet.dtos.author;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 public record AuthorDto(
@@ -9,5 +10,5 @@ public record AuthorDto(
         LocalDate birthDate,
         LocalDate deathDate,
         String biography
-) {
+) implements Serializable {
 }

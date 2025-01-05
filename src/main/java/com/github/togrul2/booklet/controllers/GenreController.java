@@ -10,6 +10,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,11 +30,13 @@ public class GenreController {
     private final GenreService genreService;
 
     @GetMapping
+    @Cacheable(cacheNames = "genres")
     public List<GenreDto> getGenres() {
         return genreService.findAll();
     }
 
     @GetMapping("/{id}")
+    @Cacheable(cacheNames = "genre", key = "#id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Genre found"),
             @ApiResponse(
@@ -45,6 +51,7 @@ public class GenreController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(cacheNames = "genres", allEntries = true)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Genre created"),
             @ApiResponse(
@@ -70,6 +77,10 @@ public class GenreController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Caching(
+            put = @CachePut(cacheNames = "genre", key = "#id"),
+            evict = @CacheEvict(cacheNames = "genres", allEntries = true)
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Genre created"),
             @ApiResponse(
@@ -89,6 +100,10 @@ public class GenreController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Caching(
+            put = @CachePut(cacheNames = "genre", key = "#id"),
+            evict = @CacheEvict(cacheNames = "genres", allEntries = true)
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Genre created"),
             @ApiResponse(
@@ -106,6 +121,12 @@ public class GenreController {
         return genreService.update(id, updateGenreDto);
     }
 
+    @Caching(
+            evict = {
+                    @CacheEvict(cacheNames = "genre", key = "#id"),
+                    @CacheEvict(cacheNames = "genres", allEntries = true)
+            }
+    )
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ApiResponse(responseCode = "204", description = "Genre deleted")

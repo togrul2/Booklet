@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.cache.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -28,10 +29,12 @@ public class AuthorController {
     private final AuthorService authorService;
 
     @GetMapping
+    @Cacheable(cacheNames = "authors", key = "#pageable")
     public Page<AuthorDto> getAuthors(@ParameterObject Pageable pageable) {
         return authorService.findAll(pageable);
     }
 
+    @Cacheable(cacheNames = "author", key = "#id")
     @GetMapping("/{id}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Author found"),
@@ -60,6 +63,7 @@ public class AuthorController {
                     content = @Content(mediaType = "application/json")
             )
     })
+    @CacheEvict(cacheNames = "authors", allEntries = true)
     public ResponseEntity<Void> createAuthor(@RequestBody @Valid CreateAuthorDto createAuthorDto) {
         AuthorDto authorDto = authorService.create(createAuthorDto);
         URI uri = ServletUriComponentsBuilder
@@ -72,6 +76,10 @@ public class AuthorController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Caching(
+            put = @CachePut(cacheNames = "author", key = "#id"),
+            evict = @CacheEvict(cacheNames = "authors", allEntries = true)
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Author created"),
             @ApiResponse(
@@ -89,6 +97,10 @@ public class AuthorController {
         return authorService.replace(id, createAuthorDto);
     }
 
+    @Caching(
+            put = @CachePut(cacheNames = "author", key = "#id"),
+            evict = @CacheEvict(cacheNames = "authors", allEntries = true)
+    )
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
@@ -111,6 +123,12 @@ public class AuthorController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ApiResponse(responseCode = "204", description = "Author deleted")
+    @Caching(
+            evict = {
+                    @CacheEvict(cacheNames = "author", key = "#id"),
+                    @CacheEvict(cacheNames = "authors", allEntries = true)
+            }
+    )
     public ResponseEntity<Void> deleteAuthor(@PathVariable long id) {
         authorService.delete(id);
         return ResponseEntity.noContent().build();

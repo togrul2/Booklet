@@ -1,4 +1,12 @@
 spring:
+  cache:
+    type: redis
+    redis:
+      host: localhost
+      port: 6379
+      cache-null-values: false
+      time-to-live: 60000
+
   application:
     name: booklet
 

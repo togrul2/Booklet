@@ -39,19 +39,14 @@ public class UserController {
         return userService.findAll(pageable);
     }
 
-    @GetMapping("/{idOrEmail}")
+    @GetMapping("/{id}")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User found"),
         @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json")),
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public UserDto getById(@PathVariable String idOrEmail) {
-        // TODO: think of something better.
-        try {
-            return userService.findById(Long.parseLong(idOrEmail));
-        } catch (NumberFormatException e) {
-            return userService.findByEmail(idOrEmail);
-        }
+    public UserDto getById(@PathVariable long id) {
+        return userService.findById(id);
     }
 
     @PostMapping
@@ -78,11 +73,13 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public UserDto getAuthUser(@AuthenticationPrincipal UserDetails userDetails) {
         return userService.findByEmail(userDetails.getUsername());
     }
 
     @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public UserDto replaceAuthUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody @Valid UpdateUserDto updateUserDto
@@ -91,6 +88,7 @@ public class UserController {
     }
 
     @PatchMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public UserDto updateAuthUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody @Valid PartialUpdateUserDto partialUpdateUserDto
@@ -99,6 +97,7 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public void deleteAuthUser(@AuthenticationPrincipal UserDetails userDetails) {
         userService.delete(userDetails.getUsername());
     }

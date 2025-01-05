@@ -11,6 +11,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +32,13 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
+    @Cacheable(cacheNames = "books", key = "#pageable")
     public Page<BookDto> getBooks(@ParameterObject Pageable pageable) {
         return bookService.findAll(pageable);
     }
 
     @GetMapping("/{id}")
+    @Cacheable(cacheNames = "book", key = "#id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Book found"),
             @ApiResponse(
@@ -46,6 +52,7 @@ public class BookController {
     }
 
     @PostMapping
+    @CacheEvict(cacheNames = "books", allEntries = true)
     @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book created"),
@@ -76,6 +83,10 @@ public class BookController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Caching(
+            put = @CachePut(cacheNames = "book", key = "#id"),
+            evict = @CacheEvict(cacheNames = "books", allEntries = true)
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book created"),
             @ApiResponse(
@@ -100,6 +111,10 @@ public class BookController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Caching(
+            put = @CachePut(cacheNames = "book", key = "#id"),
+            evict = @CacheEvict(cacheNames = "books", allEntries = true)
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book created"),
             @ApiResponse(
@@ -123,6 +138,10 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "book", key = "#id"),
+            @CacheEvict(cacheNames = "books", allEntries = true)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @ApiResponse(responseCode = "204", description = "Book deleted")
     public ResponseEntity<Void> deleteBook(@PathVariable long id) {
