@@ -7,6 +7,7 @@ import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.exceptions.AuthorNotFound;
 import com.github.togrul2.booklet.mappers.AuthorMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
+import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
@@ -24,18 +25,20 @@ public class AuthorService {
                 .map(AuthorMapper.INSTANCE::toAuthorDto);
     }
 
-    public AuthorDto findOneById(long id) {
+    public AuthorDto findById(long id) {
         return authorRepository
                 .findById(id)
                 .map(AuthorMapper.INSTANCE::toAuthorDto)
                 .orElseThrow(AuthorNotFound::new);
     }
 
+    @IsAdmin
     public AuthorDto create(CreateAuthorDto createAuthorDto) {
         Author author = AuthorMapper.INSTANCE.toAuthor(createAuthorDto);
         return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }
 
+    @IsAdmin
     public AuthorDto replace(long id, CreateAuthorDto createAuthorDto) {
         if (!authorRepository.existsById(id)) {
             throw new AuthorNotFound();
@@ -46,6 +49,7 @@ public class AuthorService {
         return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }
 
+    @IsAdmin
     public AuthorDto update(long id, @NonNull UpdateAuthorDto updateAuthorDto) {
         Author author = authorRepository
                 .findById(id)
@@ -70,6 +74,7 @@ public class AuthorService {
         return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }
 
+    @IsAdmin
     public void delete(long id) {
         authorRepository.deleteById(id);
     }

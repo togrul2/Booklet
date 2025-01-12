@@ -7,11 +7,13 @@ import com.github.togrul2.booklet.entities.Genre;
 import com.github.togrul2.booklet.exceptions.GenreNotFound;
 import com.github.togrul2.booklet.mappers.GenreMapper;
 import com.github.togrul2.booklet.repositories.GenreRepository;
+import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -19,76 +21,73 @@ public class GenreService {
     private final GenreRepository genreRepository;
 
     public List<GenreDto> findAll() {
-        return GenreMapper.INSTANCE.toGenreDtoList(genreRepository.findAll());
+        return genreRepository
+                .findAll()
+                .stream()
+                .map(GenreMapper.INSTANCE::toGenreDto)
+                .collect(Collectors.toList());
     }
 
-    public GenreDto findOneById(long id) {
-        Genre genre = genreRepository
+    public GenreDto findById(long id) {
+        return genreRepository
                 .findById(id)
+                .map(GenreMapper.INSTANCE::toGenreDto)
                 .orElseThrow(GenreNotFound::new);
-        return GenreMapper.INSTANCE.toGenreDto(genre);
     }
 
-    private void validateGenreData(@NonNull CreateGenreDto createGenreDto) {
-        // TODO: Throw multiple errors, not one by one like now.
-        if (genreRepository.existsByName(createGenreDto.name())) {
-            throw new IllegalArgumentException("Genre with this name already exists");
-        }
-        if (genreRepository.existsBySlug(createGenreDto.slug())) {
-            throw new IllegalArgumentException("Genre with this slug already exists");
-        }
+    private void validateGenre(Genre genre) {
+        genreRepository.findByName(genre.getName()).ifPresent(g -> {
+            if (g.getId() == null || !Objects.equals(g.getId(), genre.getId())) {
+                throw new IllegalArgumentException("Genre with this name already exists.");
+            }
+        });
+
+        genreRepository.findBySlug(genre.getSlug()).ifPresent(g -> {
+            if (g.getId() == null || !Objects.equals(g.getId(), genre.getId())) {
+                throw new IllegalArgumentException("Genre with this slug already exists.");
+            }
+        });
     }
 
-    private void validateGenreData(@NonNull CreateGenreDto createGenreDto, long id) {
-        if (genreRepository.existsByNameAndIdNot(createGenreDto.name(), id)) {
-            throw new IllegalArgumentException("Genre with this name already exists");
-        }
-        if (genreRepository.existsBySlugAndIdNot(createGenreDto.slug(), id)) {
-            throw new IllegalArgumentException("Genre with this slug already exists");
-        }
-    }
-
-    private void validateGenreData(@NonNull UpdateGenreDto updateGenreDto, long id) {
-        if ((updateGenreDto.name() != null) && genreRepository.existsByNameAndIdNot(updateGenreDto.name(), id)) {
-            throw new IllegalArgumentException("Genre with this name already exists");
-        }
-        if ((updateGenreDto.slug() != null) && genreRepository.existsBySlugAndIdNot(updateGenreDto.slug(), id)) {
-            throw new IllegalArgumentException("Genre with this slug already exists");
-        }
-    }
-
+    @IsAdmin
     public GenreDto create(CreateGenreDto createGenreDto) {
-        validateGenreData(createGenreDto);
-        return GenreMapper.INSTANCE.toGenreDto(
-                genreRepository.save(GenreMapper.INSTANCE.toGenre(createGenreDto))
-        );
+        Genre genre = GenreMapper.INSTANCE.toGenre(createGenreDto);
+        validateGenre(genre);
+        return GenreMapper.INSTANCE.toGenreDto(genreRepository.save(genre));
     }
 
+    @IsAdmin
     public GenreDto replace(long id, CreateGenreDto createGenreDto) {
+        // Validate if given genre exists.
         if (!genreRepository.existsById(id)) {
             throw new GenreNotFound();
         }
 
-        validateGenreData(createGenreDto, id);
+        // Create genre.
         Genre genre = GenreMapper.INSTANCE.toGenre(createGenreDto);
         genre.setId(id);
+
+        validateGenre(genre);
         return GenreMapper.INSTANCE.toGenreDto(genreRepository.save(genre));
     }
 
+    @IsAdmin
     public GenreDto update(long id, UpdateGenreDto updateGenreDto) {
         Genre genre = genreRepository.findById(id).orElseThrow(GenreNotFound::new);
-        validateGenreData(updateGenreDto, id);
 
         if (updateGenreDto.name() != null) {
             genre.setName(updateGenreDto.name());
         }
+
         if (updateGenreDto.slug() != null) {
             genre.setSlug(updateGenreDto.slug());
         }
 
+        validateGenre(genre);
         return GenreMapper.INSTANCE.toGenreDto(genreRepository.save(genre));
     }
 
+    @IsAdmin
     public void delete(long id) {
         genreRepository.deleteById(id);
     }

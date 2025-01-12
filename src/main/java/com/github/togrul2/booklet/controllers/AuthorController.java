@@ -15,7 +15,6 @@ import org.springframework.cache.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -30,7 +29,7 @@ public class AuthorController {
 
     @GetMapping
     @Cacheable(cacheNames = "authors", key = "#pageable")
-    public Page<AuthorDto> getAuthors(@ParameterObject Pageable pageable) {
+    public Page<AuthorDto> findAll(@ParameterObject Pageable pageable) {
         return authorService.findAll(pageable);
     }
 
@@ -44,12 +43,11 @@ public class AuthorController {
                     content = @Content(mediaType = "application/json")
             )
     })
-    public AuthorDto getAuthor(@PathVariable long id) {
-        return authorService.findOneById(id);
+    public AuthorDto findById(@PathVariable long id) {
+        return authorService.findById(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Author created"),
             @ApiResponse(
@@ -64,7 +62,7 @@ public class AuthorController {
             )
     })
     @CacheEvict(cacheNames = "authors", allEntries = true)
-    public ResponseEntity<Void> createAuthor(@RequestBody @Valid CreateAuthorDto createAuthorDto) {
+    public ResponseEntity<Void> create(@RequestBody @Valid CreateAuthorDto createAuthorDto) {
         AuthorDto authorDto = authorService.create(createAuthorDto);
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -75,10 +73,9 @@ public class AuthorController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     @Caching(
             put = @CachePut(cacheNames = "author", key = "#id"),
-            evict = @CacheEvict(cacheNames = "authors", allEntries = true)
+            evict = @CacheEvict(cacheNames = {"authors", "books", "book"}, allEntries = true)
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Author created"),
@@ -93,16 +90,15 @@ public class AuthorController {
                     content = @Content(mediaType = "application/json")
             )
     })
-    public AuthorDto replaceAuthor(@PathVariable long id, @RequestBody @Valid CreateAuthorDto createAuthorDto) {
+    public AuthorDto replace(@PathVariable long id, @RequestBody @Valid CreateAuthorDto createAuthorDto) {
         return authorService.replace(id, createAuthorDto);
     }
 
     @Caching(
             put = @CachePut(cacheNames = "author", key = "#id"),
-            evict = @CacheEvict(cacheNames = "authors", allEntries = true)
+            evict = @CacheEvict(cacheNames = {"authors", "books", "book"}, allEntries = true)
     )
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Author created"),
             @ApiResponse(
@@ -116,20 +112,19 @@ public class AuthorController {
                     content = @Content(mediaType = "application/json")
             )
     })
-    public AuthorDto updateAuthor(@PathVariable long id, @RequestBody @Valid UpdateAuthorDto updateAuthorDto) {
+    public AuthorDto update(@PathVariable long id, @RequestBody @Valid UpdateAuthorDto updateAuthorDto) {
         return authorService.update(id, updateAuthorDto);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponse(responseCode = "204", description = "Author deleted")
     @Caching(
             evict = {
                     @CacheEvict(cacheNames = "author", key = "#id"),
-                    @CacheEvict(cacheNames = "authors", allEntries = true)
+                    @CacheEvict(cacheNames = {"authors", "books", "book"}, allEntries = true)
             }
     )
-    public ResponseEntity<Void> deleteAuthor(@PathVariable long id) {
+    public ResponseEntity<Void> delete(@PathVariable long id) {
         authorService.delete(id);
         return ResponseEntity.noContent().build();
     }

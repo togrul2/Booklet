@@ -20,7 +20,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
      */
     @Query(
             "SELECT r FROM Reservation r " +
-            "WHERE r.user.email = ?#{principal.username}"
+            "WHERE r.user.email = ?#{principal?.username}"
     )
     Page<Reservation> findAllForAuthUser(Pageable pageable);
 
@@ -43,7 +43,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query(
             "SELECT r FROM Reservation r " +
             "WHERE r.id = :id " +
-            "AND r.user.email = ?#{principal.username}"
+            "AND r.user.email = ?#{principal?.username}"
     )
     Optional<Reservation> findByIdForAuthUser(long id);
 }

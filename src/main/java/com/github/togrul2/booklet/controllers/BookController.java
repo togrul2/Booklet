@@ -18,7 +18,6 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -29,7 +28,6 @@ import java.net.URI;
 @Tag(name = "Books")
 @RequestMapping("/api/v1/books")
 public class BookController {
-    // TODO: evict book cache on author, genre ops.
     private final BookService bookService;
 
     @GetMapping
@@ -54,7 +52,6 @@ public class BookController {
 
     @PostMapping
     @CacheEvict(cacheNames = "books", allEntries = true)
-    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Book created"),
             @ApiResponse(
@@ -83,7 +80,6 @@ public class BookController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     @Caching(
             put = @CachePut(cacheNames = "book", key = "#id"),
             evict = @CacheEvict(cacheNames = "books", allEntries = true)
@@ -111,7 +107,6 @@ public class BookController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     @Caching(
             put = @CachePut(cacheNames = "book", key = "#id"),
             evict = @CacheEvict(cacheNames = "books", allEntries = true)
@@ -143,7 +138,6 @@ public class BookController {
             @CacheEvict(cacheNames = "book", key = "#id"),
             @CacheEvict(cacheNames = "books", allEntries = true)
     })
-    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponse(responseCode = "204", description = "Book deleted")
     public ResponseEntity<Void> deleteBook(@PathVariable long id) {
         bookService.delete(id);

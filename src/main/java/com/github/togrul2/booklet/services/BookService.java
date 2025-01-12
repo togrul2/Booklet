@@ -11,11 +11,14 @@ import com.github.togrul2.booklet.mappers.BookMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.GenreRepository;
+import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -33,48 +36,41 @@ public class BookService {
         return BookMapper.INSTANCE.toBookDto(book);
     }
 
-    private void checkIsbnAvailability(String isbn) {
-        if (bookRepository.existsByIsbn(isbn)) {
-            throw new IllegalArgumentException("ISBN is already taken");
-        }
+    private void validateBook(Book book) {
+        bookRepository.findByIsbn(book.getIsbn()).ifPresent(b -> {
+            if (b.getId() == null || !Objects.equals(b.getId(), book.getId())) {
+                throw new IllegalArgumentException("Book with this ISBN already exists.");
+            }
+        });
     }
 
-    /**
-     * Checks if given isbn is taken by someone with different id than target one.
-     *
-     * @param isbn isbn to check uniqueness.
-     * @param id   ID of the book to exclude from checking.
-     */
-    private void checkIsbnAvailability(String isbn, long id) {
-        if (bookRepository.existsByIsbnAndIdNot(isbn, id)) {
-            throw new IllegalArgumentException("ISBN is already taken");
-        }
-    }
-
+    @IsAdmin
     public BookDto create(@NonNull CreateBookDto createBookDto) {
-        checkIsbnAvailability(createBookDto.isbn());
         Book book = BookMapper.INSTANCE.toBook(createBookDto);
         book.setAuthor(authorRepository.findById(createBookDto.authorId()).orElseThrow(AuthorNotFound::new));
         book.setGenre(genreRepository.findById(createBookDto.genreId()).orElseThrow(GenreNotFound::new));
+        validateBook(book);
         return BookMapper.INSTANCE.toBookDto(bookRepository.save(book));
     }
 
+    @IsAdmin
     public BookDto replace(long id, @NonNull CreateBookDto createBookDto) {
+        // Check if book exists. If not throw BookNotFound exception.
         if (!bookRepository.existsById(id)) {
             throw new BookNotFound();
         }
 
-        checkIsbnAvailability(createBookDto.isbn(), id);
         Book book = BookMapper.INSTANCE.toBook(createBookDto);
         book.setId(id);
         book.setAuthor(authorRepository.findById(createBookDto.authorId()).orElseThrow(AuthorNotFound::new));
         book.setGenre(genreRepository.findById(createBookDto.genreId()).orElseThrow(GenreNotFound::new));
+        validateBook(book);
         return BookMapper.INSTANCE.toBookDto(bookRepository.save(book));
     }
 
+    @IsAdmin
     public BookDto update(long id, @NonNull UpdateBookDto updateBookDto) {
         Book book = bookRepository.findById(id).orElseThrow(BookNotFound::new);
-        checkIsbnAvailability(updateBookDto.isbn(), id);
 
         if (updateBookDto.title() != null) {
             book.setTitle(updateBookDto.title());
@@ -96,9 +92,11 @@ public class BookService {
             book.setYear(updateBookDto.year());
         }
 
+        validateBook(book);
         return BookMapper.INSTANCE.toBookDto(bookRepository.save(book));
     }
 
+    @IsAdmin
     public void delete(long id) {
         bookRepository.deleteById(id);
     }

@@ -40,7 +40,7 @@ public class BookServiceTests {
     private BookService bookService;
 
     private List<Book> books;
-    private Book book;
+    private Book book, anotherBook;
 
     @BeforeEach
     public void setUp() {
@@ -61,6 +61,15 @@ public class BookServiceTests {
                 .genre(genre)
                 .isbn("1234567890")
                 .year(2019)
+                .build();
+        this.anotherBook = Book
+                .builder()
+                .id(2L)
+                .title("Another test title")
+                .author(author)
+                .genre(genre)
+                .isbn("0987654321")
+                .year(2020)
                 .build();
         books = List.of(book);
     }
@@ -142,8 +151,15 @@ public class BookServiceTests {
     @Test
     public void testCreateWithTakenIsbn() {
         Mockito
-                .when(bookRepository.existsByIsbn(book.getIsbn()))
-                .thenReturn(true);
+                .when(authorRepository.findById(book.getAuthor().getId()))
+                .thenReturn(Optional.of(book.getAuthor()));
+        Mockito
+                .when(genreRepository.findById(book.getGenre().getId()))
+                .thenReturn(Optional.of(book.getGenre()));
+        Mockito
+                .when(bookRepository.findByIsbn(book.getIsbn()))
+                .thenReturn(Optional.of(anotherBook));
+
         Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> bookService.create(
@@ -157,8 +173,14 @@ public class BookServiceTests {
                 )
         );
         Mockito
+                .verify(authorRepository, Mockito.times(1))
+                .findById(book.getAuthor().getId());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .findById(book.getGenre().getId());
+        Mockito
                 .verify(bookRepository, Mockito.times(1))
-                .existsByIsbn(book.getIsbn());
+                .findByIsbn(book.getIsbn());
     }
 
     @Test
@@ -244,16 +266,30 @@ public class BookServiceTests {
                 .when(bookRepository.existsById(book.getId()))
                 .thenReturn(true);
         Mockito
-                .when(bookRepository.existsByIsbnAndIdNot(createBookDto.isbn(), book.getId()))
-                .thenReturn(true);
+                .when(authorRepository.findById(book.getAuthor().getId()))
+                .thenReturn(Optional.of(book.getAuthor()));
+        Mockito
+                .when(genreRepository.findById(book.getGenre().getId()))
+                .thenReturn(Optional.of(book.getGenre()));
+        Mockito
+                .when(bookRepository.findByIsbn(createBookDto.isbn()))
+                .thenReturn(Optional.of(anotherBook));
 
-        Assertions.assertThrows(IllegalArgumentException.class, () -> bookService.replace(book.getId(), createBookDto));
+        Assertions.assertThrows(
+                IllegalArgumentException.class, () -> bookService.replace(book.getId(), createBookDto)
+        );
         Mockito
                 .verify(bookRepository, Mockito.times(1))
                 .existsById(book.getId());
         Mockito
+                .verify(authorRepository, Mockito.times(1))
+                .findById(book.getAuthor().getId());
+        Mockito
+                .verify(genreRepository, Mockito.times(1))
+                .findById(book.getGenre().getId());
+        Mockito
                 .verify(bookRepository, Mockito.times(1))
-                .existsByIsbnAndIdNot(createBookDto.isbn(), book.getId());
+                .findByIsbn(createBookDto.isbn());
     }
 
     @Test
@@ -305,8 +341,8 @@ public class BookServiceTests {
                 .when(bookRepository.findById(book.getId()))
                 .thenReturn(Optional.of(book));
         Mockito
-                .when(bookRepository.existsByIsbnAndIdNot(book.getIsbn(), book.getId()))
-                .thenReturn(true);
+                .when(bookRepository.findByIsbn(book.getIsbn()))
+                .thenReturn(Optional.of(anotherBook));
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -320,7 +356,7 @@ public class BookServiceTests {
                 .findById(book.getId());
         Mockito
                 .verify(bookRepository, Mockito.times(1))
-                .existsByIsbnAndIdNot(book.getIsbn(), book.getId());
+                .findByIsbn(book.getIsbn());
     }
 
     @Test

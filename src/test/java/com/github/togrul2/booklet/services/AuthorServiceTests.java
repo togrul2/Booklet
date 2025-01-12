@@ -60,7 +60,7 @@ public class AuthorServiceTests {
         Mockito
                 .when(authorRepository.findById(author.getId()))
                 .thenReturn(java.util.Optional.of(author));
-        AuthorDto resultAuthor = authorService.findOneById(author.getId());
+        AuthorDto resultAuthor = authorService.findById(author.getId());
         Mockito
                 .verify(authorRepository, Mockito.times(1))
                 .findById(author.getId());
@@ -72,7 +72,7 @@ public class AuthorServiceTests {
         Mockito
                 .when(authorRepository.findById(author.getId()))
                 .thenReturn(java.util.Optional.empty());
-        Assertions.assertThrows(AuthorNotFound.class, () -> authorService.findOneById(author.getId()));
+        Assertions.assertThrows(AuthorNotFound.class, () -> authorService.findById(author.getId()));
         Mockito
                 .verify(authorRepository, Mockito.times(1))
                 .findById(author.getId());

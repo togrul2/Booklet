@@ -20,7 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -28,23 +28,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private void checkEmailAvailability(String email) {
-        if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already taken");
-        }
-    }
-
-    /**
-     * Checks email availability for user with given id.
-     *
-     * @param email  email to check.
-     * @param userId userId to exclude from search.
-     * @throws IllegalArgumentException If email with given id belongs to user with different id.
-     */
-    private void checkEmailAvailability(String email, long userId) {
-        if (userRepository.existsByEmailAndIdNot(email, userId)) {
-            throw new IllegalArgumentException("Email already taken");
-        }
+    private void validateUser(User user) {
+        userRepository.findByEmail(user.getEmail()).ifPresent(u -> {
+            if (user.getId() == null || !Objects.equals(u.getId(), user.getId())) {
+                throw new IllegalArgumentException("Email already taken");
+            }
+        });
     }
 
     /**
@@ -54,10 +43,10 @@ public class UserService {
      */
     @PreAuthorize("isAnonymous()")
     public UserDto register(@NonNull CreateUserDto createUserDto) {
-        checkEmailAvailability(createUserDto.email());
         User user = UserMapper.INSTANCE.toUser(createUserDto);
         user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(createUserDto.password()));
+        validateUser(user);
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 
@@ -119,10 +108,10 @@ public class UserService {
      */
     public UserDto replace(long id, @NonNull UpdateUserDto updateUserDto) {
         User user = findUserById(id);
-        checkEmailAvailability(updateUserDto.email(), id);
         user.setEmail(updateUserDto.email());
         user.setFirstName(updateUserDto.firstName());
         user.setLastName(updateUserDto.lastName());
+        validateUser(user);
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 
@@ -137,11 +126,6 @@ public class UserService {
     public UserDto update(long id, @NonNull PartialUpdateUserDto partialUpdateUserDto) {
         User user = findUserById(id);
 
-        // See if email is available if it gets updated.
-        Optional
-                .ofNullable(partialUpdateUserDto.email())
-                .ifPresent(email -> checkEmailAvailability(email, id));
-
         // Update user fields if they are not null.
         if (partialUpdateUserDto.email() != null) {
             user.setEmail(partialUpdateUserDto.email());
@@ -155,6 +139,7 @@ public class UserService {
             user.setLastName(partialUpdateUserDto.lastName());
         }
 
+        validateUser(user);
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 
