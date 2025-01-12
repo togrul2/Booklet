@@ -4,10 +4,10 @@ import com.github.togrul2.booklet.dtos.genre.CreateGenreDto;
 import com.github.togrul2.booklet.dtos.genre.GenreDto;
 import com.github.togrul2.booklet.dtos.genre.UpdateGenreDto;
 import com.github.togrul2.booklet.entities.Genre;
-import com.github.togrul2.booklet.exceptions.GenreNotFound;
 import com.github.togrul2.booklet.mappers.GenreMapper;
 import com.github.togrul2.booklet.repositories.GenreRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +32,7 @@ public class GenreService {
         return genreRepository
                 .findById(id)
                 .map(GenreMapper.INSTANCE::toGenreDto)
-                .orElseThrow(GenreNotFound::new);
+                .orElseThrow(() -> new EntityNotFoundException("Genre not found."));
     }
 
     private void validateGenre(Genre genre) {
@@ -60,7 +60,7 @@ public class GenreService {
     public GenreDto replace(long id, CreateGenreDto createGenreDto) {
         // Validate if given genre exists.
         if (!genreRepository.existsById(id)) {
-            throw new GenreNotFound();
+            throw new EntityNotFoundException("Genre not found.");
         }
 
         // Create genre.
@@ -73,7 +73,9 @@ public class GenreService {
 
     @IsAdmin
     public GenreDto update(long id, UpdateGenreDto updateGenreDto) {
-        Genre genre = genreRepository.findById(id).orElseThrow(GenreNotFound::new);
+        Genre genre = genreRepository
+                .findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Genre not found."));
 
         if (updateGenreDto.name() != null) {
             genre.setName(updateGenreDto.name());

@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -84,7 +86,9 @@ public class BookControllerTests {
     @Disabled
     @WithAnonymousUser
     public void testGetBooks() {
-        ResponseEntity<PageImpl> response = restTemplate.getForEntity(domain + "/api/v1/books", PageImpl.class);
+        ResponseEntity<PageImpl<BookDto>> response = restTemplate.exchange(
+                domain + "/api/v1/books", HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
+        );
         Assertions.assertTrue(response.getStatusCode().is2xxSuccessful());
         Assertions.assertNotNull(response.getBody());
     }

@@ -4,10 +4,10 @@ import com.github.togrul2.booklet.dtos.author.AuthorDto;
 import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
 import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.entities.Author;
-import com.github.togrul2.booklet.exceptions.AuthorNotFound;
 import com.github.togrul2.booklet.mappers.AuthorMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
@@ -29,7 +29,7 @@ public class AuthorService {
         return authorRepository
                 .findById(id)
                 .map(AuthorMapper.INSTANCE::toAuthorDto)
-                .orElseThrow(AuthorNotFound::new);
+                .orElseThrow(() -> new EntityNotFoundException("Author not found."));
     }
 
     @IsAdmin
@@ -41,7 +41,7 @@ public class AuthorService {
     @IsAdmin
     public AuthorDto replace(long id, CreateAuthorDto createAuthorDto) {
         if (!authorRepository.existsById(id)) {
-            throw new AuthorNotFound();
+            throw new EntityNotFoundException("Author not found.");
         }
 
         Author author = AuthorMapper.INSTANCE.toAuthor(createAuthorDto);
@@ -53,7 +53,7 @@ public class AuthorService {
     public AuthorDto update(long id, @NonNull UpdateAuthorDto updateAuthorDto) {
         Author author = authorRepository
                 .findById(id)
-                .orElseThrow(AuthorNotFound::new);
+                .orElseThrow(() -> new EntityNotFoundException("Author not found."));
 
         if (updateAuthorDto.name() != null) {
             author.setName(updateAuthorDto.name());

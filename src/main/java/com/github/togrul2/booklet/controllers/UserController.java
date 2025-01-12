@@ -92,6 +92,29 @@ public class UserController {
         return userService.replace(id, updateUserDto);
     }
 
+    @PatchMapping("/{id}")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User updated"),
+        @ApiResponse(
+                responseCode = "400",
+                description = "Validation error",
+                content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+                responseCode = "404",
+                description = "User not found",
+                content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Conflict with current data",
+            content = @Content(mediaType = "application/json")
+        )
+    })
+    public UserDto update(@PathVariable long id, @RequestBody @Valid PartialUpdateUserDto partialUpdateUserDto) {
+        return userService.update(id, partialUpdateUserDto);
+    }
+
     @DeleteMapping("/{id}")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "User deleted"),
@@ -106,6 +129,20 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Auth user found"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Auth user not found",
+                    content = @Content(mediaType = "application/json")
+            ),
+        }
+    )
     public UserDto getAuthUser() {
         return userService.findAuthUser();
     }

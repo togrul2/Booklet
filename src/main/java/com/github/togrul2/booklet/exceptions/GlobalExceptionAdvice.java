@@ -2,6 +2,7 @@ package com.github.togrul2.booklet.exceptions;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,14 +25,18 @@ import java.io.IOException;
  * @see IllegalStateException
  * @see ExpiredJwtException
  * @see JwtException
+ * @see EntityNotFoundException
  * @since 1.0
  */
 @ControllerAdvice
 public class GlobalExceptionAdvice extends ResponseEntityExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionAdvice.class);
 
+    /**
+     * Handle AccessDeniedException. An exception is thrown when a user tries to access a resource that is not allowed.
+     */
     @ExceptionHandler(AccessDeniedException.class)
-    public void handleAccessDeniedException(RuntimeException e, HttpServletResponse response) throws IOException {
+    private void handleAccessDeniedException(RuntimeException e, HttpServletResponse response) throws IOException {
         logger.warn("Access denied exception: {}", e.getMessage());
         response.sendError(HttpStatus.FORBIDDEN.value());
     }
@@ -39,12 +44,9 @@ public class GlobalExceptionAdvice extends ResponseEntityExceptionHandler {
     /**
      * Handle IllegalArgumentException and IllegalStateException.
      * An exception is thrown when a method receives an argument that is taken or creates a conflict in the database.
-     *
-     * @param e        The exception that was thrown.
-     * @param response The response that will be sent.
      */
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
-    protected void handleConflictException(RuntimeException e, HttpServletResponse response) throws IOException {
+    private void handleConflictException(RuntimeException e, HttpServletResponse response) throws IOException {
         logger.warn("Conflict exception: {}", e.getMessage());
         response.sendError(HttpStatus.CONFLICT.value());
     }
@@ -52,13 +54,20 @@ public class GlobalExceptionAdvice extends ResponseEntityExceptionHandler {
     /**
      * Handle ExpiredJwtException and JwtException.
      * An exception is thrown when a JWT token is expired or invalid.
-     *
-     * @param e        The exception that was thrown.
-     * @param response The response that will be sent.
      */
     @ExceptionHandler(JwtException.class)
-    public void handleJwtException(RuntimeException e, HttpServletResponse response) throws IOException {
+    private void handleJwtException(RuntimeException e, HttpServletResponse response) throws IOException {
         logger.warn("JWT exception: {}", e.getMessage());
         response.sendError(HttpStatus.UNAUTHORIZED.value());
+    }
+
+    /**
+     * Handle EntityNotFoundException
+     * An exception is thrown when an entity is not found in the database.
+     */
+    @ExceptionHandler(EntityNotFoundException.class)
+    private void handleEntityNotFoundException(RuntimeException e, HttpServletResponse response) throws IOException {
+        logger.warn("Entity not found exception: {}", e.getMessage());
+        response.sendError(HttpStatus.NOT_FOUND.value());
     }
 }

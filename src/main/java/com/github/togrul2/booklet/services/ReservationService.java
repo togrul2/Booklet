@@ -3,22 +3,22 @@ package com.github.togrul2.booklet.services;
 import com.github.togrul2.booklet.dtos.reservation.CreateReservationDto;
 import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
 import com.github.togrul2.booklet.dtos.reservation.UpdateReservationDto;
+import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Reservation;
-import com.github.togrul2.booklet.exceptions.BookNotFound;
-import com.github.togrul2.booklet.exceptions.ReservationNotFound;
-import com.github.togrul2.booklet.exceptions.UserNotFound;
+import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.mappers.ReservationMapper;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.ReservationRepository;
 import com.github.togrul2.booklet.repositories.UserRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import com.github.togrul2.booklet.security.annotations.IsUser;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -33,10 +33,9 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
+    private static final Duration MINIMUM_RESERVATION_DURATION = Duration.ofDays(1);
 
-    @PostAuthorize(
-            "hasRole('USER') && (hasRole('ADMIN') || returnObject.user.email == authentication.principal.username)"
-    )
+    @PreAuthorize("hasRole('USER')")
     public ReservationDto findById(long id) {
         return reservationRepository
                 .findById(id)
@@ -63,7 +62,7 @@ public class ReservationService {
         return reservationRepository
                 .findByIdForAuthUser(id)
                 .map(ReservationMapper.INSTANCE::toReservationDto)
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found."));
     }
 
     /**
@@ -76,9 +75,12 @@ public class ReservationService {
         Duration reservationDuration = Duration.between(reservation.getStartDate(), reservation.getEndDate());
         if (LocalDateTime.now().isAfter(reservation.getStartDate()) ||
             LocalDateTime.now().isAfter(reservation.getEndDate()) ||
-            // TODO: Add minimum reservation duration check.
-            reservationDuration.isNegative()) {
+            reservation.getStartDate().isAfter(reservation.getEndDate())) {
             throw new IllegalArgumentException("Invalid reservation dates.");
+        }
+
+        if (reservationDuration.compareTo(MINIMUM_RESERVATION_DURATION) < 0) {
+            throw new IllegalArgumentException("Minimum reservation duration is 1 day.");
         }
 
         if (reservationRepository.hasOverlappingSession(
@@ -86,16 +88,22 @@ public class ReservationService {
                 reservation.getStartDate(),
                 reservation.getEndDate()
         )) {
-            throw new IllegalArgumentException("Overlapping reservation is not allowed.");
+            throw new IllegalArgumentException("Overlapping reservation session.");
         }
     }
 
-    @IsAdmin
+    @IsUser
     public ReservationDto reserveBook(@NonNull UserDetails userDetails, @NonNull CreateReservationDto reservationDto) {
         // Create reservation instance.
         Reservation reservation = ReservationMapper.INSTANCE.toReservation(reservationDto);
-        reservation.setUser(userRepository.findByEmail(userDetails.getUsername()).orElseThrow(UserNotFound::new));
-        reservation.setBook(bookRepository.findById(reservationDto.bookId()).orElseThrow(BookNotFound::new));
+        User user = userRepository
+                .findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+        Book book = bookRepository
+                .findById(reservationDto.bookId())
+                .orElseThrow(() -> new EntityNotFoundException("Book not found."));
+        reservation.setUser(user);
+        reservation.setBook(book);
 
         validateReservation(reservation);
         return ReservationMapper.INSTANCE.toReservationDto(reservationRepository.save(reservation));
@@ -105,12 +113,15 @@ public class ReservationService {
     public ReservationDto replace(long id, @NonNull CreateReservationDto requestBody) {
         // Check if the reservation exists.
         if (!reservationRepository.existsById(id)) {
-            throw new ReservationNotFound();
+            throw new EntityNotFoundException("Reservation not found.");
         }
 
         // Create reservation instance.
         Reservation reservation = ReservationMapper.INSTANCE.toReservation(requestBody);
-        reservation.setBook(bookRepository.findById(requestBody.bookId()).orElseThrow(BookNotFound::new));
+        Book book = bookRepository
+                .findById(requestBody.bookId())
+                .orElseThrow(() -> new EntityNotFoundException("Book not found."));
+        reservation.setBook(book);
 
         validateReservation(reservation);
         return ReservationMapper.INSTANCE.toReservationDto(reservationRepository.save(reservation));
@@ -118,7 +129,9 @@ public class ReservationService {
 
     @IsAdmin
     public ReservationDto update(long id, @NonNull UpdateReservationDto requestBody) {
-        Reservation reservation = reservationRepository.findById(id).orElseThrow(ReservationNotFound::new);
+        Reservation reservation = reservationRepository
+                .findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found."));
 
         // Update reservation fields if provided.
         if (!Objects.isNull(requestBody.startDate())) {
@@ -130,7 +143,10 @@ public class ReservationService {
         }
 
         if (!Objects.isNull(requestBody.bookId())) {
-            reservation.setBook(bookRepository.findById(requestBody.bookId()).orElseThrow(BookNotFound::new));
+            Book book = bookRepository
+                .findById(requestBody.bookId())
+                .orElseThrow(() -> new EntityNotFoundException("Book not found."));
+            reservation.setBook(book);
         }
 
         validateReservation(reservation);
@@ -141,10 +157,13 @@ public class ReservationService {
      * Deletes a reservation. This method validates the user's permission to delete the reservation.
      * If user is not an admin, the reservation must belong to the authenticated user.
      * @param id The id of the reservation to delete.
-     * @throws ReservationNotFound If the reservation does not exist.
+     * @throws EntityNotFoundException the reservation does not exist.
      */
+    @PreAuthorize("hasRole('USER')")
     public void delete(long id) {
-        ReservationDto reservation = findById(id);
-        reservationRepository.deleteById(reservation.id());
+        Reservation reservation = reservationRepository
+                .findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found."));
+        reservationRepository.delete(reservation);
     }
 }

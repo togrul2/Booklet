@@ -4,9 +4,9 @@ import com.github.togrul2.booklet.dtos.genre.CreateGenreDto;
 import com.github.togrul2.booklet.dtos.genre.GenreDto;
 import com.github.togrul2.booklet.dtos.genre.UpdateGenreDto;
 import com.github.togrul2.booklet.entities.Genre;
-import com.github.togrul2.booklet.exceptions.GenreNotFound;
 import com.github.togrul2.booklet.mappers.GenreMapper;
 import com.github.togrul2.booklet.repositories.GenreRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,7 +65,7 @@ public class GenreServiceTests {
         Mockito
                 .when(genreRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.empty());
-        Assertions.assertThrows(GenreNotFound.class, () -> genreService.findById(genre.getId()));
+        Assertions.assertThrows(EntityNotFoundException.class, () -> genreService.findById(genre.getId()));
         Mockito
                 .verify(genreRepository, Mockito.times(1))
                 .findById(Mockito.anyLong());
@@ -190,7 +190,7 @@ public class GenreServiceTests {
                 .thenReturn(false);
 
         Assertions.assertThrows(
-                GenreNotFound.class,
+                EntityNotFoundException.class,
                 () -> genreService.replace(genre.getId(), createGenreDto)
         );
         Mockito

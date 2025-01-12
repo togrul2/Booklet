@@ -6,13 +6,12 @@ import com.github.togrul2.booklet.dtos.user.UpdateUserDto;
 import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.entities.Role;
 import com.github.togrul2.booklet.entities.User;
-import com.github.togrul2.booklet.exceptions.UserNotFound;
 import com.github.togrul2.booklet.mappers.UserMapper;
 import com.github.togrul2.booklet.repositories.UserRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import com.github.togrul2.booklet.security.annotations.IsAuthenticated;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -31,7 +30,7 @@ public class UserService {
     private void validateUser(User user) {
         userRepository.findByEmail(user.getEmail()).ifPresent(u -> {
             if (user.getId() == null || !Objects.equals(u.getId(), user.getId())) {
-                throw new IllegalArgumentException("Email already taken");
+                throw new IllegalArgumentException("Email already taken.");
             }
         });
     }
@@ -42,7 +41,7 @@ public class UserService {
      * @return created user.
      */
     @PreAuthorize("isAnonymous()")
-    public UserDto register(@NonNull CreateUserDto createUserDto) {
+    public UserDto register(CreateUserDto createUserDto) {
         User user = UserMapper.INSTANCE.toUser(createUserDto);
         user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(createUserDto.password()));
@@ -55,59 +54,15 @@ public class UserService {
         return userRepository.findAll(pageable).map(UserMapper.INSTANCE::toUserDto);
     }
 
-    /**
-     * Finds authenticated user.
-     * @throws UserNotFound If authenticated user does not exist.
-     * @return authenticated user.
-     */
-    @IsAuthenticated
-    public UserDto findAuthUser() {
-        return userRepository
-                .findAuthUser()
-                .map(UserMapper.INSTANCE::toUserDto)
-                .orElseThrow(UserNotFound::new);
-    }
-
-    @IsAuthenticated
-    public UserDto replaceAuthUser(@NonNull UpdateUserDto updateUserDto) {
-        return replace(findAuthUser().id(), updateUserDto);
-    }
-
-    @IsAuthenticated
-    public UserDto updateAuthUser(@NonNull PartialUpdateUserDto partialUpdateUserDto) {
-        return update(findAuthUser().id(), partialUpdateUserDto);
-    }
-
-    @IsAuthenticated
-    public void deleteAuthUser() {
-        delete(findAuthUser().id());
-    }
-
-    public UserDto findById(long id) {
-        return UserMapper.INSTANCE.toUserDto(findUserById(id));
-    }
-
-    /**
-     * Finds user by id. Authenticated user must be an admin or target user.
-     * @param id    id of user to find.
-     * @throws UserNotFound If user with given id does not exist.
-     * @return user with given id.
-     */
     @PostAuthorize("hasRole('ADMIN') or returnObject.email == principal.username")
-    public User findUserById(long id) {
-        return userRepository.findById(id).orElseThrow(UserNotFound::new);
+    public UserDto findById(long id) {
+        return userRepository
+                .findById(id)
+                .map(UserMapper.INSTANCE::toUserDto)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
     }
 
-    /**
-     * Replaces user with given id. Authenticated user must be an admin or target user.
-     * @param id id of user to update.
-     * @param updateUserDto request dto.
-     * @throws IllegalArgumentException If email is already taken.
-     * @throws UserNotFound If user with given id does not exist.
-     * @return updated user.
-     */
-    public UserDto replace(long id, @NonNull UpdateUserDto updateUserDto) {
-        User user = findUserById(id);
+    private UserDto replaceUser(User user, UpdateUserDto updateUserDto) {
         user.setEmail(updateUserDto.email());
         user.setFirstName(updateUserDto.firstName());
         user.setLastName(updateUserDto.lastName());
@@ -115,18 +70,7 @@ public class UserService {
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 
-    /**
-     * Updates user with given id. Authenticated user must be an admin or target user.
-     * @param id id of user to update.
-     * @param partialUpdateUserDto request dto.
-     * @throws IllegalArgumentException If email is already taken.
-     * @throws UserNotFound If user with given id does not exist.
-     * @return updated user.
-     */
-    public UserDto update(long id, @NonNull PartialUpdateUserDto partialUpdateUserDto) {
-        User user = findUserById(id);
-
-        // Update user fields if they are not null.
+    private UserDto updateUser(User user, PartialUpdateUserDto partialUpdateUserDto) {
         if (partialUpdateUserDto.email() != null) {
             user.setEmail(partialUpdateUserDto.email());
         }
@@ -144,12 +88,70 @@ public class UserService {
     }
 
     /**
+     * Replaces user with given id. Authenticated user must be an admin or target user.
+     * @param id id of user to update.
+     * @param updateUserDto request dto.
+     * @throws IllegalArgumentException If email is already taken.
+     * @throws EntityNotFoundException If user with given id does not exist.
+     * @return updated user.
+     */
+    public UserDto replace(long id, UpdateUserDto updateUserDto) {
+        User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found."));
+        return replaceUser(user, updateUserDto);
+    }
+
+    /**
+     * Updates user with given id. Authenticated user must be an admin or target user.
+     * @param id id of user to update.
+     * @param partialUpdateUserDto request dto.
+     * @throws IllegalArgumentException If email is already taken.
+     * @throws EntityNotFoundException If user with given id does not exist.
+     * @return updated user.
+     */
+    public UserDto update(long id, PartialUpdateUserDto partialUpdateUserDto) {
+        User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found."));
+        return updateUser(user, partialUpdateUserDto);
+    }
+
+    /**
      * Deletes user with given id. Authenticated user must be an admin or target user.
      * @param id id of user to delete.
-     * @throws UserNotFound If user with given id does not exist.
+     * @throws EntityNotFoundException If user with given id does not exist.
      */
+    @PreAuthorize("hasRole('USER')")
     public void delete(long id) {
-        UserDto user = findById(id);
-        userRepository.deleteById(user.id());
+        User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found."));
+        userRepository.delete(user);
+    }
+
+    /**
+     * Finds authenticated user.
+     * @throws EntityNotFoundException If authenticated user does not exist.
+     * @return authenticated user.
+     */
+    @IsAuthenticated
+    public UserDto findAuthUser() {
+        return userRepository
+                .findAuthUser()
+                .map(UserMapper.INSTANCE::toUserDto)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+    }
+
+    @IsAuthenticated
+    public UserDto replaceAuthUser(UpdateUserDto updateUserDto) {
+        User user = userRepository.findAuthUser().orElseThrow(() -> new EntityNotFoundException("User not found."));
+        return replaceUser(user, updateUserDto);
+    }
+
+    @IsAuthenticated
+    public UserDto updateAuthUser(PartialUpdateUserDto partialUpdateUserDto) {
+        User user = userRepository.findAuthUser().orElseThrow(() -> new EntityNotFoundException("User not found."));
+        return updateUser(user, partialUpdateUserDto);
+    }
+
+    @IsAuthenticated
+    public void deleteAuthUser() {
+        User user = userRepository.findAuthUser().orElseThrow(() -> new EntityNotFoundException("User not found."));
+        userRepository.delete(user);
     }
 }

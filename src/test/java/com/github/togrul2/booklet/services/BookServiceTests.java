@@ -6,11 +6,11 @@ import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
 import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Genre;
-import com.github.togrul2.booklet.exceptions.BookNotFound;
 import com.github.togrul2.booklet.mappers.BookMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.GenreRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,7 +107,7 @@ public class BookServiceTests {
         Mockito
                 .when(bookRepository.findById(book.getId()))
                 .thenReturn(Optional.empty());
-        Assertions.assertThrows(BookNotFound.class, () -> bookService.findById(book.getId()));
+        Assertions.assertThrows(EntityNotFoundException.class, () -> bookService.findById(book.getId()));
         Mockito
                 .verify(bookRepository, Mockito.times(1))
                 .findById(book.getId());
@@ -245,7 +245,7 @@ public class BookServiceTests {
                 .when(bookRepository.existsById(book.getId()))
                 .thenReturn(false);
 
-        Assertions.assertThrows(BookNotFound.class, () -> bookService.replace(book.getId(), createBookDto));
+        Assertions.assertThrows(EntityNotFoundException.class, () -> bookService.replace(book.getId(), createBookDto));
         Mockito
                 .verify(bookRepository, Mockito.times(1))
                 .existsById(book.getId());

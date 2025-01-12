@@ -3,15 +3,15 @@ package com.github.togrul2.booklet.services;
 import com.github.togrul2.booklet.dtos.book.BookDto;
 import com.github.togrul2.booklet.dtos.book.CreateBookDto;
 import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
+import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.entities.Book;
-import com.github.togrul2.booklet.exceptions.AuthorNotFound;
-import com.github.togrul2.booklet.exceptions.BookNotFound;
-import com.github.togrul2.booklet.exceptions.GenreNotFound;
+import com.github.togrul2.booklet.entities.Genre;
 import com.github.togrul2.booklet.mappers.BookMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.GenreRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
@@ -32,7 +32,7 @@ public class BookService {
     }
 
     public BookDto findById(long id) {
-        Book book = bookRepository.findById(id).orElseThrow(BookNotFound::new);
+        Book book = bookRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Book not found."));
         return BookMapper.INSTANCE.toBookDto(book);
     }
 
@@ -47,8 +47,14 @@ public class BookService {
     @IsAdmin
     public BookDto create(@NonNull CreateBookDto createBookDto) {
         Book book = BookMapper.INSTANCE.toBook(createBookDto);
-        book.setAuthor(authorRepository.findById(createBookDto.authorId()).orElseThrow(AuthorNotFound::new));
-        book.setGenre(genreRepository.findById(createBookDto.genreId()).orElseThrow(GenreNotFound::new));
+        Author author = authorRepository
+                .findById(createBookDto.authorId())
+                .orElseThrow(() -> new EntityNotFoundException("Author not found."));
+        Genre genre = genreRepository
+                .findById(createBookDto.genreId())
+                .orElseThrow(() -> new EntityNotFoundException("Genre not found."));
+        book.setAuthor(author);
+        book.setGenre(genre);
         validateBook(book);
         return BookMapper.INSTANCE.toBookDto(bookRepository.save(book));
     }
@@ -57,31 +63,43 @@ public class BookService {
     public BookDto replace(long id, @NonNull CreateBookDto createBookDto) {
         // Check if book exists. If not throw BookNotFound exception.
         if (!bookRepository.existsById(id)) {
-            throw new BookNotFound();
+            throw new EntityNotFoundException("Book not found.");
         }
 
         Book book = BookMapper.INSTANCE.toBook(createBookDto);
+        Author author = authorRepository
+                .findById(createBookDto.authorId())
+                .orElseThrow(() -> new EntityNotFoundException("Author not found."));
+        Genre genre = genreRepository
+                .findById(createBookDto.genreId())
+                .orElseThrow(() -> new EntityNotFoundException("Genre not found."));
         book.setId(id);
-        book.setAuthor(authorRepository.findById(createBookDto.authorId()).orElseThrow(AuthorNotFound::new));
-        book.setGenre(genreRepository.findById(createBookDto.genreId()).orElseThrow(GenreNotFound::new));
+        book.setAuthor(author);
+        book.setGenre(genre);
         validateBook(book);
         return BookMapper.INSTANCE.toBookDto(bookRepository.save(book));
     }
 
     @IsAdmin
     public BookDto update(long id, @NonNull UpdateBookDto updateBookDto) {
-        Book book = bookRepository.findById(id).orElseThrow(BookNotFound::new);
+        Book book = bookRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Book not found."));
 
         if (updateBookDto.title() != null) {
             book.setTitle(updateBookDto.title());
         }
 
         if (updateBookDto.authorId() != null) {
-            book.setAuthor(authorRepository.findById(updateBookDto.authorId()).orElseThrow(AuthorNotFound::new));
+            Author author = authorRepository
+                    .findById(updateBookDto.authorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Author not found."));
+            book.setAuthor(author);
         }
 
         if (updateBookDto.genreId() != null) {
-            book.setGenre(genreRepository.findById(updateBookDto.genreId()).orElseThrow(GenreNotFound::new));
+            Genre genre = genreRepository
+                    .findById(updateBookDto.genreId())
+                    .orElseThrow(() -> new EntityNotFoundException("Genre not found."));
+            book.setGenre(genre);
         }
 
         if (updateBookDto.isbn() != null) {

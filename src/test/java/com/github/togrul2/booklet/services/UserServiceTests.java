@@ -3,8 +3,8 @@ package com.github.togrul2.booklet.services;
 import com.github.togrul2.booklet.dtos.user.CreateUserDto;
 import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.entities.User;
-import com.github.togrul2.booklet.exceptions.UserNotFound;
 import com.github.togrul2.booklet.repositories.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -136,7 +136,7 @@ public class UserServiceTests {
         Mockito
                 .when(userRepository.findById(Mockito.anyLong()))
                 .thenReturn(java.util.Optional.empty());
-        Assertions.assertThrows(UserNotFound.class, () -> userService.findById(1L));
+        Assertions.assertThrows(EntityNotFoundException.class, () -> userService.findById(1L));
         Mockito
                 .verify(userRepository, Mockito.times(1))
                 .findById(Mockito.anyLong());

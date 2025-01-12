@@ -32,13 +32,18 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             "END " +
             "FROM Reservation r " +
             "WHERE r.book = :book " +
-            "AND (" +
-                    "(r.startDate <= :start AND r.endDate >= :start)" +
-                    " OR " +
-                    "(r.startDate <= :end AND r.endDate >= :end)" +
-            ")"
+            "AND ((r.startDate <= :start AND r.endDate >= :start) " +
+            "OR (r.startDate <= :end AND r.endDate >= :end))"
     )
     boolean hasOverlappingSession(Book book, LocalDateTime start, LocalDateTime end);
+
+    @Query(
+            "SELECT r FROM Reservation r " +
+            "WHERE r.id = :id " +
+            "AND r.user.email = ?#{principal?.username}" +
+            "OR ?#{principal?.authorities.contains('ROLE_ADMIN')} = true"
+    )
+    Optional<Reservation> findById(long id);
 
     @Query(
             "SELECT r FROM Reservation r " +

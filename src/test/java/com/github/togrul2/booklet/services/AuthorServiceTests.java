@@ -4,9 +4,9 @@ import com.github.togrul2.booklet.dtos.author.AuthorDto;
 import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
 import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.entities.Author;
-import com.github.togrul2.booklet.exceptions.AuthorNotFound;
 import com.github.togrul2.booklet.mappers.AuthorMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,7 +72,7 @@ public class AuthorServiceTests {
         Mockito
                 .when(authorRepository.findById(author.getId()))
                 .thenReturn(java.util.Optional.empty());
-        Assertions.assertThrows(AuthorNotFound.class, () -> authorService.findById(author.getId()));
+        Assertions.assertThrows(EntityNotFoundException.class, () -> authorService.findById(author.getId()));
         Mockito
                 .verify(authorRepository, Mockito.times(1))
                 .findById(author.getId());
@@ -146,7 +146,7 @@ public class AuthorServiceTests {
                 .when(authorRepository.existsById(author.getId()))
                 .thenReturn(false);
 
-        Assertions.assertThrows(AuthorNotFound.class, () -> authorService.replace(author.getId(), createAuthorDto));
+        Assertions.assertThrows(EntityNotFoundException.class, () -> authorService.replace(author.getId(), createAuthorDto));
         Mockito
                 .verify(authorRepository, Mockito.times(1))
                 .existsById(author.getId());
