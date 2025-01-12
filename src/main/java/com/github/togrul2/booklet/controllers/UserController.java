@@ -1,11 +1,13 @@
 package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.dtos.auth.TokenPairDto;
+import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
 import com.github.togrul2.booklet.dtos.user.CreateUserDto;
 import com.github.togrul2.booklet.dtos.user.PartialUpdateUserDto;
 import com.github.togrul2.booklet.dtos.user.UpdateUserDto;
 import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.services.AuthService;
+import com.github.togrul2.booklet.services.ReservationService;
 import com.github.togrul2.booklet.services.UserService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -17,9 +19,6 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -32,21 +31,11 @@ import java.net.URI;
 public class UserController {
     private final UserService userService;
     private final AuthService authService;
+    private final ReservationService reservationService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public Page<UserDto> getAll(@ParameterObject Pageable pageable) {
         return userService.findAll(pageable);
-    }
-
-    @GetMapping("/{id}")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User found"),
-        @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json")),
-    })
-    @PreAuthorize("hasRole('ADMIN')")
-    public UserDto getById(@PathVariable long id) {
-        return userService.findById(id);
     }
 
     @PostMapping
@@ -72,33 +61,77 @@ public class UserController {
                 .body(authService.createTokenPairs(user.email()));
     }
 
+    @GetMapping("/{id}")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User found"),
+        @ApiResponse(
+                responseCode = "404",
+                description = "User not found",
+                content = @Content(mediaType = "application/json")
+        ),
+    })
+    public UserDto getById(@PathVariable long id) {
+        return userService.findById(id);
+    }
+
+    @PutMapping("/{id}")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User replaced"),
+        @ApiResponse(
+                responseCode = "400",
+                description = "Validation error",
+                content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+                responseCode = "404",
+                description = "User not found",
+                content = @Content(mediaType = "application/json")
+        ),
+    })
+    public UserDto replace(@PathVariable long id, @RequestBody @Valid UpdateUserDto updateUserDto) {
+        return userService.replace(id, updateUserDto);
+    }
+
+    @DeleteMapping("/{id}")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "User deleted"),
+        @ApiResponse(
+                responseCode = "404",
+                description = "User not found",
+                content = @Content(mediaType = "application/json")
+        ),
+    })
+    public void delete(@PathVariable long id) {
+        userService.delete(id);
+    }
+
     @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public UserDto getAuthUser(@AuthenticationPrincipal UserDetails userDetails) {
-        return userService.findByEmail(userDetails.getUsername());
+    public UserDto getAuthUser() {
+        return userService.findAuthUser();
     }
 
     @PutMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public UserDto replaceAuthUser(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody @Valid UpdateUserDto updateUserDto
-    ) {
-        return userService.replace(userDetails.getUsername(), updateUserDto);
+    public UserDto replaceAuthUser(@RequestBody @Valid UpdateUserDto updateUserDto) {
+        return userService.replaceAuthUser(updateUserDto);
     }
 
     @PatchMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public UserDto updateAuthUser(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody @Valid PartialUpdateUserDto partialUpdateUserDto
-    ) {
-        return userService.update(userDetails.getUsername(), partialUpdateUserDto);
+    public UserDto updateAuthUser(@RequestBody @Valid PartialUpdateUserDto partialUpdateUserDto) {
+        return userService.updateAuthUser(partialUpdateUserDto);
     }
 
     @DeleteMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public void deleteAuthUser(@AuthenticationPrincipal UserDetails userDetails) {
-        userService.delete(userDetails.getUsername());
+    public void deleteAuthUser() {
+        userService.deleteAuthUser();
+    }
+
+    @GetMapping("/me/reservations")
+    public Page<ReservationDto> getAuthUserReservations(@ParameterObject Pageable pageable) {
+        return reservationService.findAllForAuthUser(pageable);
+    }
+
+    @GetMapping("/me/reservations/{id}")
+    public ReservationDto findReservationForAuthUserById(@PathVariable long id) {
+        return reservationService.findByIdForAuthUser(id);
     }
 }

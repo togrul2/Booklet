@@ -1,5 +1,6 @@
 package com.github.togrul2.booklet.controllers;
 
+import com.github.togrul2.booklet.annotations.WithMockAdminUser;
 import com.github.togrul2.booklet.dtos.book.BookDto;
 import com.github.togrul2.booklet.dtos.book.CreateBookDto;
 import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
@@ -16,15 +17,14 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@WithMockAdminUser
 @ActiveProfiles("test")
-@WithMockUser(roles = {"ADMIN"})
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class BookControllerTests {

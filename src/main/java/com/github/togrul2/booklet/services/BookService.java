@@ -28,7 +28,7 @@ public class BookService {
         return bookRepository.findAll(pageable).map(BookMapper.INSTANCE::toBookDto);
     }
 
-    public BookDto findOneById(long id) {
+    public BookDto findById(long id) {
         Book book = bookRepository.findById(id).orElseThrow(BookNotFound::new);
         return BookMapper.INSTANCE.toBookDto(book);
     }

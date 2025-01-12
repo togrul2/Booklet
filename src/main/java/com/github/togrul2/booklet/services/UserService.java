@@ -9,10 +9,14 @@ import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.exceptions.UserNotFound;
 import com.github.togrul2.booklet.mappers.UserMapper;
 import com.github.togrul2.booklet.repositories.UserRepository;
+import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import com.github.togrul2.booklet.security.annotations.IsAuthenticated;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +47,12 @@ public class UserService {
         }
     }
 
+    /**
+     * Registers new user. Authenticated user must be anonymous, thus not authenticated.
+     * @param createUserDto request dto.
+     * @return created user.
+     */
+    @PreAuthorize("isAnonymous()")
     public UserDto register(@NonNull CreateUserDto createUserDto) {
         checkEmailAvailability(createUserDto.email());
         User user = UserMapper.INSTANCE.toUser(createUserDto);
@@ -51,44 +61,88 @@ public class UserService {
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 
+    @IsAdmin
     public Page<UserDto> findAll(Pageable pageable) {
         return userRepository.findAll(pageable).map(UserMapper.INSTANCE::toUserDto);
     }
 
+    /**
+     * Finds authenticated user.
+     * @throws UserNotFound If authenticated user does not exist.
+     * @return authenticated user.
+     */
+    @IsAuthenticated
+    public UserDto findAuthUser() {
+        return userRepository
+                .findAuthUser()
+                .map(UserMapper.INSTANCE::toUserDto)
+                .orElseThrow(UserNotFound::new);
+    }
+
+    @IsAuthenticated
+    public UserDto replaceAuthUser(@NonNull UpdateUserDto updateUserDto) {
+        return replace(findAuthUser().id(), updateUserDto);
+    }
+
+    @IsAuthenticated
+    public UserDto updateAuthUser(@NonNull PartialUpdateUserDto partialUpdateUserDto) {
+        return update(findAuthUser().id(), partialUpdateUserDto);
+    }
+
+    @IsAuthenticated
+    public void deleteAuthUser() {
+        delete(findAuthUser().id());
+    }
+
     public UserDto findById(long id) {
-        return userRepository
-                .findById(id)
-                .map(UserMapper.INSTANCE::toUserDto)
-                .orElseThrow(UserNotFound::new);
+        return UserMapper.INSTANCE.toUserDto(findUserById(id));
     }
 
-    public UserDto findByEmail(String username) {
-        return userRepository
-                .findByEmail(username)
-                .map(UserMapper.INSTANCE::toUserDto)
-                .orElseThrow(UserNotFound::new);
+    /**
+     * Finds user by id. Authenticated user must be an admin or target user.
+     * @param id    id of user to find.
+     * @throws UserNotFound If user with given id does not exist.
+     * @return user with given id.
+     */
+    @PostAuthorize("hasRole('ADMIN') or returnObject.email == principal.username")
+    public User findUserById(long id) {
+        return userRepository.findById(id).orElseThrow(UserNotFound::new);
     }
 
-    private UserDto replaceUser(@NonNull User user, @NonNull UpdateUserDto updateUserDto) {
+    /**
+     * Replaces user with given id. Authenticated user must be an admin or target user.
+     * @param id id of user to update.
+     * @param updateUserDto request dto.
+     * @throws IllegalArgumentException If email is already taken.
+     * @throws UserNotFound If user with given id does not exist.
+     * @return updated user.
+     */
+    public UserDto replace(long id, @NonNull UpdateUserDto updateUserDto) {
+        User user = findUserById(id);
+        checkEmailAvailability(updateUserDto.email(), id);
         user.setEmail(updateUserDto.email());
         user.setFirstName(updateUserDto.firstName());
         user.setLastName(updateUserDto.lastName());
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 
-    public UserDto replace(long userId, @NonNull UpdateUserDto updateUserDto) {
-        checkEmailAvailability(updateUserDto.email(), userId);
-        User user = userRepository.findById(userId).orElseThrow(UserNotFound::new);
-        return replaceUser(user, updateUserDto);
-    }
+    /**
+     * Updates user with given id. Authenticated user must be an admin or target user.
+     * @param id id of user to update.
+     * @param partialUpdateUserDto request dto.
+     * @throws IllegalArgumentException If email is already taken.
+     * @throws UserNotFound If user with given id does not exist.
+     * @return updated user.
+     */
+    public UserDto update(long id, @NonNull PartialUpdateUserDto partialUpdateUserDto) {
+        User user = findUserById(id);
 
-    public UserDto replace(String email, @NonNull UpdateUserDto updateUserDto) {
-        checkEmailAvailability(updateUserDto.email());
-        User user = userRepository.findByEmail(email).orElseThrow(UserNotFound::new);
-        return replaceUser(user, updateUserDto);
-    }
+        // See if email is available if it gets updated.
+        Optional
+                .ofNullable(partialUpdateUserDto.email())
+                .ifPresent(email -> checkEmailAvailability(email, id));
 
-    private UserDto updateUser(User user, PartialUpdateUserDto partialUpdateUserDto) {
+        // Update user fields if they are not null.
         if (partialUpdateUserDto.email() != null) {
             user.setEmail(partialUpdateUserDto.email());
         }
@@ -104,29 +158,13 @@ public class UserService {
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 
-    public UserDto update(long userId, @NonNull PartialUpdateUserDto partialUpdateUserDto) {
-        Optional
-                .ofNullable(partialUpdateUserDto.email())
-                .ifPresent(email -> checkEmailAvailability(email, userId));
-
-        User user = userRepository.findById(userId).orElseThrow(UserNotFound::new);
-        return updateUser(user, partialUpdateUserDto);
-    }
-
-    public UserDto update(String email, @NonNull PartialUpdateUserDto partialUpdateUserDto) {
-        Optional
-                .ofNullable(partialUpdateUserDto.email())
-                .ifPresent(this::checkEmailAvailability);
-
-        User user = userRepository.findByEmail(email).orElseThrow(UserNotFound::new);
-        return updateUser(user, partialUpdateUserDto);
-    }
-
-    public void delete(long userId) {
-        userRepository.deleteById(userId);
-    }
-
-    public void delete(String email) {
-        userRepository.deleteByEmail(email);
+    /**
+     * Deletes user with given id. Authenticated user must be an admin or target user.
+     * @param id id of user to delete.
+     * @throws UserNotFound If user with given id does not exist.
+     */
+    public void delete(long id) {
+        UserDto user = findById(id);
+        userRepository.deleteById(user.id());
     }
 }

@@ -85,7 +85,7 @@ public class BookServiceTests {
         Mockito
                 .when(bookRepository.findById(book.getId()))
                 .thenReturn(Optional.of(book));
-        BookDto result = bookService.findOneById(book.getId());
+        BookDto result = bookService.findById(book.getId());
         Assertions.assertNotNull(result);
         Assertions.assertEquals(book.getId(), result.id());
         Mockito
@@ -98,7 +98,7 @@ public class BookServiceTests {
         Mockito
                 .when(bookRepository.findById(book.getId()))
                 .thenReturn(Optional.empty());
-        Assertions.assertThrows(BookNotFound.class, () -> bookService.findOneById(book.getId()));
+        Assertions.assertThrows(BookNotFound.class, () -> bookService.findById(book.getId()));
         Mockito
                 .verify(bookRepository, Mockito.times(1))
                 .findById(book.getId());

@@ -25,10 +25,10 @@ public class AuthorService {
     }
 
     public AuthorDto findOneById(long id) {
-        Author author = authorRepository
+        return authorRepository
                 .findById(id)
+                .map(AuthorMapper.INSTANCE::toAuthorDto)
                 .orElseThrow(AuthorNotFound::new);
-        return AuthorMapper.INSTANCE.toAuthorDto(author);
     }
 
     public AuthorDto create(CreateAuthorDto createAuthorDto) {

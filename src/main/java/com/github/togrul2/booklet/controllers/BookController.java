@@ -29,6 +29,7 @@ import java.net.URI;
 @Tag(name = "Books")
 @RequestMapping("/api/v1/books")
 public class BookController {
+    // TODO: evict book cache on author, genre ops.
     private final BookService bookService;
 
     @GetMapping
@@ -48,7 +49,7 @@ public class BookController {
             )
     })
     public BookDto getBook(@PathVariable long id) {
-        return bookService.findOneById(id);
+        return bookService.findById(id);
     }
 
     @PostMapping
@@ -88,7 +89,7 @@ public class BookController {
             evict = @CacheEvict(cacheNames = "books", allEntries = true)
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Book created"),
+            @ApiResponse(responseCode = "200", description = "Book replaced"),
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid input",
@@ -116,7 +117,7 @@ public class BookController {
             evict = @CacheEvict(cacheNames = "books", allEntries = true)
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Book created"),
+            @ApiResponse(responseCode = "200", description = "Book updated"),
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid input",
