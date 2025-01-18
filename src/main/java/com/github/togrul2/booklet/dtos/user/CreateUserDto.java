@@ -19,4 +19,5 @@ public record CreateUserDto(
         @NotBlank
         @NotNull
         String lastName
-) {}
+) {
+}

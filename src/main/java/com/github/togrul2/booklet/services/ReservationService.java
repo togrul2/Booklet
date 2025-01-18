@@ -18,7 +18,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -30,12 +29,12 @@ import java.util.Objects;
 @Transactional
 @RequiredArgsConstructor
 public class ReservationService {
+    private static final Duration MINIMUM_RESERVATION_DURATION = Duration.ofDays(1);
     private final ReservationRepository reservationRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
-    private static final Duration MINIMUM_RESERVATION_DURATION = Duration.ofDays(1);
 
-    @PreAuthorize("hasRole('USER')")
+    @IsUser
     public ReservationDto findById(long id) {
         return reservationRepository
                 .findById(id)
@@ -68,14 +67,15 @@ public class ReservationService {
     /**
      * Validates reservation dates. Checks if the start date is before the end date. Also checks if the start date and
      * end date are in the future.
+     *
      * @param reservation Reservation entity instance to validate.
      * @throws IllegalArgumentException If the reservation dates are invalid.
      */
     private void validateReservation(@NonNull Reservation reservation) {
         Duration reservationDuration = Duration.between(reservation.getStartDate(), reservation.getEndDate());
         if (LocalDateTime.now().isAfter(reservation.getStartDate()) ||
-            LocalDateTime.now().isAfter(reservation.getEndDate()) ||
-            reservation.getStartDate().isAfter(reservation.getEndDate())) {
+                LocalDateTime.now().isAfter(reservation.getEndDate()) ||
+                reservation.getStartDate().isAfter(reservation.getEndDate())) {
             throw new IllegalArgumentException("Invalid reservation dates.");
         }
 
@@ -144,8 +144,8 @@ public class ReservationService {
 
         if (!Objects.isNull(requestBody.bookId())) {
             Book book = bookRepository
-                .findById(requestBody.bookId())
-                .orElseThrow(() -> new EntityNotFoundException("Book not found."));
+                    .findById(requestBody.bookId())
+                    .orElseThrow(() -> new EntityNotFoundException("Book not found."));
             reservation.setBook(book);
         }
 
@@ -156,10 +156,11 @@ public class ReservationService {
     /**
      * Deletes a reservation. This method validates the user's permission to delete the reservation.
      * If user is not an admin, the reservation must belong to the authenticated user.
+     *
      * @param id The id of the reservation to delete.
      * @throws EntityNotFoundException the reservation does not exist.
      */
-    @PreAuthorize("hasRole('USER')")
+    @IsUser
     public void delete(long id) {
         Reservation reservation = reservationRepository
                 .findById(id)

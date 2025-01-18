@@ -12,14 +12,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.email = ?#{ principal?.username }")
     Optional<User> findAuthUser();
 
-    /** Finds user by id. Authenticated user must be the target user or admin.
+    /**
+     * Finds user by id. Authenticated user must be the target user or admin.
+     *
      * @param id target user's id.
      * @return Optional of user entity.
      */
     @Query(
             "SELECT u FROm User u " +
-            "WHERE u.id = ?1 AND u.email = ?#{ principal?.username } " +
-            "OR ?#{principal?.authorities.contains('ROLE_ADMIN')} = true"
+                    "WHERE u.id = ?1 AND u.email = ?#{ principal?.username } " +
+                    "OR ?#{principal?.authorities.contains('ROLE_ADMIN')} = true"
     )
     Optional<User> findById(long id);
 }

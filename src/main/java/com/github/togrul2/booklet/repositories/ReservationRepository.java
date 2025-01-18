@@ -20,7 +20,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
      */
     @Query(
             "SELECT r FROM Reservation r " +
-            "WHERE r.user.email = ?#{principal?.username}"
+                    "WHERE r.user.email = ?#{principal?.username}"
     )
     Page<Reservation> findAllForAuthUser(Pageable pageable);
 

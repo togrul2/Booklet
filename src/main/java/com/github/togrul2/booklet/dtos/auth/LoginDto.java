@@ -6,11 +6,5 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 @Builder
-public record LoginDto(
-        @Email
-        String email,
-        @NotNull
-        @NotBlank
-        String password
-) {
+public record LoginDto(@Email String email, @NotNull @NotBlank String password) {
 }

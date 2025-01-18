@@ -10,8 +10,12 @@ import java.lang.annotation.Target;
 
 /**
  * A custom annotation to check if the user is authenticated.
+ * This annotation uses the {@link PreAuthorize} annotation to check user roles and can be used on methods and classes.
+ *
+ * @see PreAuthorize
  */
-@Target({ ElementType.METHOD, ElementType.TYPE })
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @PreAuthorize("isAuthenticated()")
-public @interface IsAuthenticated {}
+public @interface IsAuthenticated {
+}

@@ -5,7 +5,7 @@ import lombok.Builder;
 import org.hibernate.validator.constraints.Length;
 
 @Builder
-public record UpdateBookDto (
+public record UpdateBookDto(
         @Length(max = Book.TITLE_MAX_LENGTH)
         String title,
         Long authorId,
@@ -13,4 +13,5 @@ public record UpdateBookDto (
         @Length(min = Book.ISBN_MIN_LENGTH, max = Book.ISBN_MAX_LENGTH)
         String isbn,
         Integer year
-) {}
+) {
+}

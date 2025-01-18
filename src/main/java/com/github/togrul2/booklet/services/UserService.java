@@ -10,6 +10,7 @@ import com.github.togrul2.booklet.mappers.UserMapper;
 import com.github.togrul2.booklet.repositories.UserRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import com.github.togrul2.booklet.security.annotations.IsAuthenticated;
+import com.github.togrul2.booklet.security.annotations.IsUser;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Validates user. Throws exception if email is already taken.
+     *
+     * @param user user to validate.
+     * @throws IllegalArgumentException If email is already taken by another user.
+     */
     private void validateUser(User user) {
         userRepository.findByEmail(user.getEmail()).ifPresent(u -> {
             if (user.getId() == null || !Objects.equals(u.getId(), user.getId())) {
@@ -36,9 +43,11 @@ public class UserService {
     }
 
     /**
-     * Registers new user. Authenticated user must be anonymous, thus not authenticated.
+     * Registers new user. Authenticated user must be anonymous.
+     *
      * @param createUserDto request dto.
      * @return created user.
+     * @throws IllegalArgumentException If email is already taken.
      */
     @PreAuthorize("isAnonymous()")
     public UserDto register(CreateUserDto createUserDto) {
@@ -89,12 +98,14 @@ public class UserService {
 
     /**
      * Replaces user with given id. Authenticated user must be an admin or target user.
-     * @param id id of user to update.
+     *
+     * @param id            id of user to update.
      * @param updateUserDto request dto.
-     * @throws IllegalArgumentException If email is already taken.
-     * @throws EntityNotFoundException If user with given id does not exist.
      * @return updated user.
+     * @throws IllegalArgumentException If email is already taken.
+     * @throws EntityNotFoundException  If user with given id does not exist.
      */
+    @IsUser
     public UserDto replace(long id, UpdateUserDto updateUserDto) {
         User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found."));
         return replaceUser(user, updateUserDto);
@@ -102,12 +113,14 @@ public class UserService {
 
     /**
      * Updates user with given id. Authenticated user must be an admin or target user.
-     * @param id id of user to update.
+     *
+     * @param id                   id of user to update.
      * @param partialUpdateUserDto request dto.
-     * @throws IllegalArgumentException If email is already taken.
-     * @throws EntityNotFoundException If user with given id does not exist.
      * @return updated user.
+     * @throws IllegalArgumentException If email is already taken.
+     * @throws EntityNotFoundException  If user with given id does not exist.
      */
+    @IsUser
     public UserDto update(long id, PartialUpdateUserDto partialUpdateUserDto) {
         User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found."));
         return updateUser(user, partialUpdateUserDto);
@@ -115,10 +128,11 @@ public class UserService {
 
     /**
      * Deletes user with given id. Authenticated user must be an admin or target user.
+     *
      * @param id id of user to delete.
      * @throws EntityNotFoundException If user with given id does not exist.
      */
-    @PreAuthorize("hasRole('USER')")
+    @IsUser
     public void delete(long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found."));
         userRepository.delete(user);
@@ -126,8 +140,9 @@ public class UserService {
 
     /**
      * Finds authenticated user.
-     * @throws EntityNotFoundException If authenticated user does not exist.
+     *
      * @return authenticated user.
+     * @throws EntityNotFoundException If authenticated user does not exist.
      */
     @IsAuthenticated
     public UserDto findAuthUser() {

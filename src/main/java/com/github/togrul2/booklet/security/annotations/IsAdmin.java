@@ -9,8 +9,12 @@ import java.lang.annotation.Target;
 
 /**
  * A custom annotation to check if the authenticated user has the role of an admin.
+ * This annotation uses the {@link PreAuthorize} annotation to check user roles and can be used on methods and classes.
+ *
+ * @see PreAuthorize
  */
-@Target({ ElementType.METHOD, ElementType.TYPE })
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @PreAuthorize("hasRole('ADMIN')")
-public @interface IsAdmin {}
+public @interface IsAdmin {
+}

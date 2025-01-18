@@ -11,7 +11,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.cache.annotation.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -33,8 +36,8 @@ public class AuthorController {
         return authorService.findAll(pageable);
     }
 
-    @Cacheable(cacheNames = "author", key = "#id")
     @GetMapping("/{id}")
+    @Cacheable(cacheNames = "author", key = "#id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Author found"),
             @ApiResponse(
@@ -94,11 +97,11 @@ public class AuthorController {
         return authorService.replace(id, createAuthorDto);
     }
 
+    @PatchMapping("/{id}")
     @Caching(
             put = @CachePut(cacheNames = "author", key = "#id"),
             evict = @CacheEvict(cacheNames = {"authors", "books", "book"}, allEntries = true)
     )
-    @PatchMapping("/{id}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Author created"),
             @ApiResponse(

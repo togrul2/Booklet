@@ -63,12 +63,12 @@ public class UserController {
 
     @GetMapping("/{id}")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User found"),
-        @ApiResponse(
-                responseCode = "404",
-                description = "User not found",
-                content = @Content(mediaType = "application/json")
-        ),
+            @ApiResponse(responseCode = "200", description = "User found"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(mediaType = "application/json")
+            ),
     })
     public UserDto getById(@PathVariable long id) {
         return userService.findById(id);
@@ -76,17 +76,17 @@ public class UserController {
 
     @PutMapping("/{id}")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User replaced"),
-        @ApiResponse(
-                responseCode = "400",
-                description = "Validation error",
-                content = @Content(mediaType = "application/json")
-        ),
-        @ApiResponse(
-                responseCode = "404",
-                description = "User not found",
-                content = @Content(mediaType = "application/json")
-        ),
+            @ApiResponse(responseCode = "200", description = "User replaced"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation error",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(mediaType = "application/json")
+            ),
     })
     public UserDto replace(@PathVariable long id, @RequestBody @Valid UpdateUserDto updateUserDto) {
         return userService.replace(id, updateUserDto);
@@ -94,22 +94,22 @@ public class UserController {
 
     @PatchMapping("/{id}")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User updated"),
-        @ApiResponse(
-                responseCode = "400",
-                description = "Validation error",
-                content = @Content(mediaType = "application/json")
-        ),
-        @ApiResponse(
-                responseCode = "404",
-                description = "User not found",
-                content = @Content(mediaType = "application/json")
-        ),
-        @ApiResponse(
-            responseCode = "409",
-            description = "Conflict with current data",
-            content = @Content(mediaType = "application/json")
-        )
+            @ApiResponse(responseCode = "200", description = "User updated"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation error",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Conflict with current data",
+                    content = @Content(mediaType = "application/json")
+            )
     })
     public UserDto update(@PathVariable long id, @RequestBody @Valid PartialUpdateUserDto partialUpdateUserDto) {
         return userService.update(id, partialUpdateUserDto);
@@ -117,12 +117,12 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "User deleted"),
-        @ApiResponse(
-                responseCode = "404",
-                description = "User not found",
-                content = @Content(mediaType = "application/json")
-        ),
+            @ApiResponse(responseCode = "204", description = "User deleted"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(mediaType = "application/json")
+            ),
     })
     public void delete(@PathVariable long id) {
         userService.delete(id);
@@ -141,7 +141,7 @@ public class UserController {
                     description = "Auth user not found",
                     content = @Content(mediaType = "application/json")
             ),
-        }
+    }
     )
     public UserDto getAuthUser() {
         return userService.findAuthUser();

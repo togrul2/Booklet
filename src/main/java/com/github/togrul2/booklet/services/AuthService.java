@@ -5,7 +5,6 @@ import com.github.togrul2.booklet.dtos.auth.RefreshRequestDto;
 import com.github.togrul2.booklet.dtos.auth.TokenPairDto;
 import com.github.togrul2.booklet.entities.Token;
 import com.github.togrul2.booklet.entities.User;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,7 +18,7 @@ public class AuthService {
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-    public TokenPairDto login(@NonNull LoginDto loginDto) {
+    public TokenPairDto login(LoginDto loginDto) {
         User user = (User) userDetailsService.loadUserByUsername(loginDto.email());
 
         if (!passwordEncoder.matches(loginDto.password(), user.getPassword())) {
@@ -40,7 +39,7 @@ public class AuthService {
      * @param refreshTokenDto Dto containing refresh token.
      * @return TokenPairDto containing new access and refresh tokens.
      */
-    public TokenPairDto refresh(@NonNull RefreshRequestDto refreshTokenDto) {
+    public TokenPairDto refresh(RefreshRequestDto refreshTokenDto) {
         final String refreshToken = refreshTokenDto.refreshToken();
 
         // Validate refresh token and set it as inactive so it cannot be used anymore.
@@ -75,11 +74,11 @@ public class AuthService {
                 .build();
     }
 
-    public void logout(@NonNull RefreshRequestDto refreshRequestDto) {
+    public void logout(RefreshRequestDto refreshRequestDto) {
         jwtService.deactivateRefreshToken(refreshRequestDto.refreshToken());
     }
 
-    public void validate(@NonNull RefreshRequestDto refreshRequestDto) {
+    public void validate(RefreshRequestDto refreshRequestDto) {
         jwtService.validateRefreshToken(refreshRequestDto.refreshToken());
     }
 }

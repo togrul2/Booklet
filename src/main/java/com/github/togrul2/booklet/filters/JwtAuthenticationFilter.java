@@ -35,9 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
+            HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
@@ -93,7 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * Formats the error response to servlet response
      */
     private void formatJwtExceptionResponse(
-            @NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull JwtException e
+            HttpServletRequest request, HttpServletResponse response, JwtException e
     ) throws IOException {
         PrintWriter out = response.getWriter();
         ObjectMapper objectMapper = new ObjectMapper();

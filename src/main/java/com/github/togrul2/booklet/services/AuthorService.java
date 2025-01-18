@@ -9,7 +9,6 @@ import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -50,7 +49,7 @@ public class AuthorService {
     }
 
     @IsAdmin
-    public AuthorDto update(long id, @NonNull UpdateAuthorDto updateAuthorDto) {
+    public AuthorDto update(long id, UpdateAuthorDto updateAuthorDto) {
         Author author = authorRepository
                 .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Author not found."));

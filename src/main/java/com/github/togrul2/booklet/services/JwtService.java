@@ -9,7 +9,6 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,7 +33,6 @@ public class JwtService {
     @Value("${spring.security.jwt.refresh-expiration:86400000}")
     private long refreshTokenExpiration;  // In milliseconds.
 
-    @NonNull
     private SecretKey getSecretKey() {
         byte[] decodedKey = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(decodedKey);
@@ -49,7 +47,7 @@ public class JwtService {
                 .getPayload();
     }
 
-    private <T> T extractClaim(String token, @NonNull Function<Claims, T> claimsResolver) {
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
@@ -66,12 +64,9 @@ public class JwtService {
         return extractClaim(token, claims -> TokenType.valueOf((String) claims.get("type")));
     }
 
-    private String createToken(
-            @NonNull HashMap<String, Object> claims,
-            @NonNull UserDetails userDetails,
-            long expiration
-    ) {
+    private String createToken(HashMap<String, Object> claims, UserDetails userDetails, long expiration) {
         // To make the token unique, we use the current time in milliseconds.
+        // This is done to prevent storing token uniqueness constraint in database.
         claims.put("uid", Instant.now().toEpochMilli());
         final Date expirationDate = new Date(System.currentTimeMillis() + expiration);
         return Jwts
@@ -119,7 +114,7 @@ public class JwtService {
      * @param token The refresh token to validate.
      * @throws JwtException If the token is not a refresh token or if it is not active.
      */
-    private void validateRefreshToken(@NonNull Token token) {
+    private void validateRefreshToken(Token token) {
         if (!isRefreshToken(token.getToken()) || !token.isActive()) {
             throw new JwtException("Bad refresh token");
         }
@@ -127,20 +122,20 @@ public class JwtService {
 
     public String createAccessToken(UserDetails userDetails, Role role) {
         HashMap<String, Object> claims = new HashMap<>(
-            Map.ofEntries(
-                Map.entry("type", TokenType.ACCESS),
-                Map.entry("role", role)
-            )
+                Map.ofEntries(
+                        Map.entry("type", TokenType.ACCESS),
+                        Map.entry("role", role)
+                )
         );
         return createToken(claims, userDetails, accessTokenExpiration);
     }
 
     public String createRefreshToken(UserDetails userDetails, Role role) {
         HashMap<String, Object> claims = new HashMap<>(
-            Map.ofEntries(
-                Map.entry("type", TokenType.REFRESH),
-                Map.entry("role", role)
-            )
+                Map.ofEntries(
+                        Map.entry("type", TokenType.REFRESH),
+                        Map.entry("role", role)
+                )
         );
         return createToken(claims, userDetails, refreshTokenExpiration);
     }

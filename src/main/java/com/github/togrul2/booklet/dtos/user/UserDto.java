@@ -11,4 +11,5 @@ public record UserDto(
         String creationDate,
         String modificationDate,
         Role role
-) {}
+) {
+}

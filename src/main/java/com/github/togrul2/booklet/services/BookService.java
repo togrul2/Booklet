@@ -13,7 +13,6 @@ import com.github.togrul2.booklet.repositories.GenreRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,6 +35,12 @@ public class BookService {
         return BookMapper.INSTANCE.toBookDto(book);
     }
 
+    /**
+     * Validates if the book with the same ISBN already exists.
+     *
+     * @param book Book to validate.
+     * @throws IllegalArgumentException if the book with the same ISBN already exists.
+     */
     private void validateBook(Book book) {
         bookRepository.findByIsbn(book.getIsbn()).ifPresent(b -> {
             if (b.getId() == null || !Objects.equals(b.getId(), book.getId())) {
@@ -45,7 +50,7 @@ public class BookService {
     }
 
     @IsAdmin
-    public BookDto create(@NonNull CreateBookDto createBookDto) {
+    public BookDto create(CreateBookDto createBookDto) {
         Book book = BookMapper.INSTANCE.toBook(createBookDto);
         Author author = authorRepository
                 .findById(createBookDto.authorId())
@@ -60,7 +65,7 @@ public class BookService {
     }
 
     @IsAdmin
-    public BookDto replace(long id, @NonNull CreateBookDto createBookDto) {
+    public BookDto replace(long id, CreateBookDto createBookDto) {
         // Check if book exists. If not throw BookNotFound exception.
         if (!bookRepository.existsById(id)) {
             throw new EntityNotFoundException("Book not found.");
@@ -81,7 +86,7 @@ public class BookService {
     }
 
     @IsAdmin
-    public BookDto update(long id, @NonNull UpdateBookDto updateBookDto) {
+    public BookDto update(long id, UpdateBookDto updateBookDto) {
         Book book = bookRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Book not found."));
 
         if (updateBookDto.title() != null) {
