@@ -39,7 +39,7 @@ public class ReservationService {
         return reservationRepository
                 .findById(id)
                 .map(ReservationMapper.INSTANCE::toReservationDto)
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found."));
     }
 
     @IsAdmin
