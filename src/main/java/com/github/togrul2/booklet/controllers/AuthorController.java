@@ -1,6 +1,7 @@
 package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.dtos.author.AuthorDto;
+import com.github.togrul2.booklet.dtos.author.AuthorFilterDto;
 import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
 import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.services.AuthorService;
@@ -31,9 +32,9 @@ public class AuthorController {
     private final AuthorService authorService;
 
     @GetMapping
-    @Cacheable(cacheNames = "authors", key = "#pageable")
-    public Page<AuthorDto> findAll(@ParameterObject Pageable pageable) {
-        return authorService.findAll(pageable);
+    @Cacheable(cacheNames = "authors", key = "#pageable + ';' + #filterDto")
+    public Page<AuthorDto> findAll(@ParameterObject Pageable pageable, @ParameterObject AuthorFilterDto filterDto) {
+        return authorService.findAll(pageable, filterDto);
     }
 
     @GetMapping("/{id}")

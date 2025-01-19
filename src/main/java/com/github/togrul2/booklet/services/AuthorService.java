@@ -1,27 +1,46 @@
 package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.dtos.author.AuthorDto;
+import com.github.togrul2.booklet.dtos.author.AuthorFilterDto;
 import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
 import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.mappers.AuthorMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import com.github.togrul2.booklet.specifications.AuthorSpecificationAssembler;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
 public class AuthorService {
     private final AuthorRepository authorRepository;
 
-    public Page<AuthorDto> findAll(Pageable pageable) {
-        return authorRepository
-                .findAll(pageable)
-                .map(AuthorMapper.INSTANCE::toAuthorDto);
+    public Page<AuthorDto> findAll(Pageable pageable, AuthorFilterDto filterDto) {
+        Optional<Specification<Author>> specification = AuthorSpecificationAssembler
+                .builder()
+                .filterDto(filterDto)
+                .build()
+                .getSpecification();
+
+        // If specification is present, use it. Otherwise, get all authors.
+        return specification.map(spec ->
+                        authorRepository
+                                .findAll(spec, pageable)
+                                .map(AuthorMapper.INSTANCE::toAuthorDto)
+                )
+                .orElseGet(() ->
+                        authorRepository
+                                .findAll(pageable)
+                                .map(AuthorMapper.INSTANCE::toAuthorDto)
+                );
     }
 
     public AuthorDto findById(long id) {

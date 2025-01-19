@@ -1,6 +1,7 @@
 package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.dtos.author.AuthorDto;
+import com.github.togrul2.booklet.dtos.author.AuthorFilterDto;
 import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
 import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.entities.Author;
@@ -48,7 +49,9 @@ public class AuthorServiceTests {
         Mockito
                 .when(authorRepository.findAll(PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(authors));
-        Page<AuthorDto> authors = authorService.findAll(PageRequest.of(0, 10));
+        Page<AuthorDto> authors = authorService.findAll(
+                PageRequest.of(0, 10), AuthorFilterDto.builder().build()
+        );
         Mockito
                 .verify(authorRepository, Mockito.times(1))
                 .findAll(PageRequest.of(0, 10));
@@ -146,7 +149,8 @@ public class AuthorServiceTests {
                 .when(authorRepository.existsById(author.getId()))
                 .thenReturn(false);
 
-        Assertions.assertThrows(EntityNotFoundException.class, () -> authorService.replace(author.getId(), createAuthorDto));
+        Assertions.assertThrows(EntityNotFoundException.class, () -> authorService.replace(author.getId(),
+                createAuthorDto));
         Mockito
                 .verify(authorRepository, Mockito.times(1))
                 .existsById(author.getId());
