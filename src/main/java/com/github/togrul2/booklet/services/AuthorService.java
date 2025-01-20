@@ -31,16 +31,10 @@ public class AuthorService {
                 .getSpecification();
 
         // If specification is present, use it. Otherwise, get all authors.
-        return specification.map(spec ->
-                        authorRepository
-                                .findAll(spec, pageable)
-                                .map(AuthorMapper.INSTANCE::toAuthorDto)
-                )
-                .orElseGet(() ->
-                        authorRepository
-                                .findAll(pageable)
-                                .map(AuthorMapper.INSTANCE::toAuthorDto)
-                );
+        return specification
+                .map(s -> authorRepository.findAll(s, pageable))
+                .orElseGet(() -> authorRepository.findAll(pageable))
+                .map(AuthorMapper.INSTANCE::toAuthorDto);
     }
 
     public AuthorDto findById(long id) {

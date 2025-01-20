@@ -1,6 +1,7 @@
 package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.dtos.book.BookDto;
+import com.github.togrul2.booklet.dtos.book.BookFilterDto;
 import com.github.togrul2.booklet.dtos.book.CreateBookDto;
 import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
 import com.github.togrul2.booklet.services.BookService;
@@ -31,9 +32,9 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    @Cacheable(cacheNames = "books", key = "#pageable")
-    public Page<BookDto> getBooks(@ParameterObject Pageable pageable) {
-        return bookService.findAll(pageable);
+    @Cacheable(cacheNames = "books", key = "#pageable + ';' + #filterDto")
+    public Page<BookDto> getBooks(@ParameterObject Pageable pageable, @ParameterObject @Valid BookFilterDto filterDto) {
+        return bookService.findAll(pageable, filterDto);
     }
 
     @GetMapping("/{id}")

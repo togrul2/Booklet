@@ -1,6 +1,7 @@
 package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.dtos.book.BookDto;
+import com.github.togrul2.booklet.dtos.book.BookFilterDto;
 import com.github.togrul2.booklet.dtos.book.CreateBookDto;
 import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
 import com.github.togrul2.booklet.entities.Author;
@@ -11,13 +12,16 @@ import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.GenreRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import com.github.togrul2.booklet.specifications.BookSpecificationAssembler;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -26,8 +30,19 @@ public class BookService {
     private final GenreRepository genreRepository;
     private final AuthorRepository authorRepository;
 
-    public Page<BookDto> findAll(Pageable pageable) {
-        return bookRepository.findAll(pageable).map(BookMapper.INSTANCE::toBookDto);
+    public Page<BookDto> findAll(Pageable pageable, BookFilterDto filterDto) {
+        Optional<Specification<Book>> specification = BookSpecificationAssembler
+                .builder()
+                .filterDto(filterDto)
+                .build()
+                .getSpecification();
+
+        // If specification is present, then find all books with the given specification and pageable.
+        // Otherwise, find all books with the given page params.
+        return specification
+                .map(s -> bookRepository.findAll(s, pageable))
+                .orElseGet(() -> bookRepository.findAll(pageable))
+                .map(BookMapper.INSTANCE::toBookDto);
     }
 
     public BookDto findById(long id) {
