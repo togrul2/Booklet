@@ -2,11 +2,12 @@ package com.github.togrul2.booklet.repositories;
 
 import com.github.togrul2.booklet.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
     Optional<User> findByEmail(String email);
 
     @Query("SELECT u FROM User u WHERE u.email = ?#{ principal?.username }")
@@ -19,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Optional of user entity.
      */
     @Query(
-            "SELECT u FROm User u " +
+            "SELECT u FROM User u " +
                     "WHERE u.id = ?1 AND u.email = ?#{ principal?.username } " +
                     "OR ?#{principal?.authorities.contains('ROLE_ADMIN')} = true"
     )

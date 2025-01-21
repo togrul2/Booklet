@@ -10,24 +10,24 @@ import java.util.List;
 import java.util.Optional;
 
 @Builder
-public class AuthorSpecificationAssembler implements SpecificationAssembler<Author> {
+public class AuthorSpecificationAssembler extends SpecificationAssembler<Author> {
     private final AuthorFilterDto filterDto;
 
-    private Optional<Specification<Author>> getNameSpecification() {
+    private Optional<Specification<Author>> byName() {
         if (filterDto.name() != null)
             return Optional.of((root, _, builder) ->
                     builder.like(builder.lower(root.get("name")), "%" + filterDto.name().toLowerCase() + "%"));
         return Optional.empty();
     }
 
-    private Optional<Specification<Author>> getSurnameSpecification() {
+    private Optional<Specification<Author>> bySurname() {
         if (filterDto.surname() != null)
             return Optional.of((root, _, builder) ->
                     builder.like(builder.lower(root.get("surname")), "%" + filterDto.surname().toLowerCase() + "%"));
         return Optional.empty();
     }
 
-    private Optional<Specification<Author>> getBirthDateSpecification() {
+    private Optional<Specification<Author>> byBirthDate() {
         if (filterDto.minBirthDate() != null && filterDto.maxBirthDate() != null)
             return Optional.of((root, _, builder) ->
                     builder.between(root.get("birthDate"), filterDto.minBirthDate(), filterDto.maxBirthDate()));
@@ -40,7 +40,7 @@ public class AuthorSpecificationAssembler implements SpecificationAssembler<Auth
         return Optional.empty();
     }
 
-    private Optional<Specification<Author>> getDeathDateSpecification() {
+    private Optional<Specification<Author>> byDeathDate() {
         if (filterDto.minDeathDate() != null && filterDto.maxDeathDate() != null)
             return Optional.of((root, _, builder) ->
                     builder.between(root.get("deathDate"), filterDto.minDeathDate(), filterDto.maxDeathDate()));
@@ -55,10 +55,10 @@ public class AuthorSpecificationAssembler implements SpecificationAssembler<Auth
 
     public Optional<Specification<Author>> getSpecification() {
         List<Specification<Author>> specifications = new ArrayList<>();
-        getNameSpecification().ifPresent(specifications::add);
-        getSurnameSpecification().ifPresent(specifications::add);
-        getBirthDateSpecification().ifPresent(specifications::add);
-        getDeathDateSpecification().ifPresent(specifications::add);
+        byName().ifPresent(specifications::add);
+        bySurname().ifPresent(specifications::add);
+        byBirthDate().ifPresent(specifications::add);
+        byDeathDate().ifPresent(specifications::add);
         return specifications.stream().reduce(Specification::and);
     }
 }

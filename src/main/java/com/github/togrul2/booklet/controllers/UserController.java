@@ -2,10 +2,7 @@ package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.dtos.auth.TokenPairDto;
 import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
-import com.github.togrul2.booklet.dtos.user.CreateUserDto;
-import com.github.togrul2.booklet.dtos.user.PartialUpdateUserDto;
-import com.github.togrul2.booklet.dtos.user.UpdateUserDto;
-import com.github.togrul2.booklet.dtos.user.UserDto;
+import com.github.togrul2.booklet.dtos.user.*;
 import com.github.togrul2.booklet.services.AuthService;
 import com.github.togrul2.booklet.services.ReservationService;
 import com.github.togrul2.booklet.services.UserService;
@@ -16,6 +13,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +35,9 @@ public class UserController {
     private final ReservationService reservationService;
 
     @GetMapping
-    public Page<UserDto> getAll(@ParameterObject Pageable pageable) {
-        return userService.findAll(pageable);
+    @Cacheable(value = "users", key = "#pageable + ';' + #filterDto")
+    public Page<UserDto> getAll(@ParameterObject Pageable pageable, @ParameterObject @Valid UserFilterDto filterDto) {
+        return userService.findAll(pageable, filterDto);
     }
 
     @PostMapping
@@ -48,6 +50,7 @@ public class UserController {
                     @Content(mediaType = "application/json")
             })
     })
+    @CacheEvict(value = "users", allEntries = true)
     public ResponseEntity<TokenPairDto> register(@RequestBody @Valid CreateUserDto createUserDto) {
         UserDto user = userService.register(createUserDto);
         URI uri = ServletUriComponentsBuilder
@@ -62,6 +65,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @Cacheable(value = "user", key = "#id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found"),
             @ApiResponse(
@@ -74,25 +78,11 @@ public class UserController {
         return userService.findById(id);
     }
 
-    @PutMapping("/{id}")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User replaced"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Validation error",
-                    content = @Content(mediaType = "application/json")
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "User not found",
-                    content = @Content(mediaType = "application/json")
-            ),
-    })
-    public UserDto replace(@PathVariable long id, @RequestBody @Valid UpdateUserDto updateUserDto) {
-        return userService.replace(id, updateUserDto);
-    }
-
     @PatchMapping("/{id}")
+    @Caching(
+            put = @CachePut(value = "user", key = "#id"),
+            evict = @CacheEvict(value = {"users", "authUser"}, allEntries = true)
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User updated"),
             @ApiResponse(
@@ -115,7 +105,35 @@ public class UserController {
         return userService.update(id, partialUpdateUserDto);
     }
 
+    @PutMapping("/{id}")
+    @Caching(
+            put = @CachePut(value = "user", key = "#id"),
+            evict = @CacheEvict(value = {"users", "authUser"}, allEntries = true)
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User replaced"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation error",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(mediaType = "application/json")
+            ),
+    })
+    public UserDto replace(@PathVariable long id, @RequestBody @Valid UpdateUserDto updateUserDto) {
+        return userService.replace(id, updateUserDto);
+    }
+
     @DeleteMapping("/{id}")
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "user", key = "#id"),
+                    @CacheEvict(value = {"users", "authUser"}, allEntries = true)
+            }
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User deleted"),
             @ApiResponse(
@@ -129,6 +147,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @Cacheable(value = "authUser", key = "#principal.username")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Auth user found"),
             @ApiResponse(
@@ -148,26 +167,37 @@ public class UserController {
     }
 
     @PutMapping("/me")
+    @Caching(
+            put = @CachePut(value = "authUser", key = "#principal.username"),
+            evict = @CacheEvict(value = {"users", "user"}, allEntries = true)
+    )
     public UserDto replaceAuthUser(@RequestBody @Valid UpdateUserDto updateUserDto) {
         return userService.replaceAuthUser(updateUserDto);
     }
 
     @PatchMapping("/me")
+    @Caching(
+            put = @CachePut(value = "authUser", key = "#principal.username"),
+            evict = @CacheEvict(value = {"users", "user"}, allEntries = true)
+    )
     public UserDto updateAuthUser(@RequestBody @Valid PartialUpdateUserDto partialUpdateUserDto) {
         return userService.updateAuthUser(partialUpdateUserDto);
     }
 
     @DeleteMapping("/me")
+    @CacheEvict(value = {"users", "user", "authUser"}, allEntries = true)
     public void deleteAuthUser() {
         userService.deleteAuthUser();
     }
 
     @GetMapping("/me/reservations")
+    @Cacheable(value = "authUserReservations", key = "#principal.username + ';' + #pageable")
     public Page<ReservationDto> getAuthUserReservations(@ParameterObject Pageable pageable) {
         return reservationService.findAllForAuthUser(pageable);
     }
 
     @GetMapping("/me/reservations/{id}")
+    @Cacheable(value = "authUserReservation", key = "#principal.username + ';' + #id")
     public ReservationDto findReservationForAuthUserById(@PathVariable long id) {
         return reservationService.findByIdForAuthUser(id);
     }

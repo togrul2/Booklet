@@ -1,6 +1,7 @@
 package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.dtos.book.BookDto;
+import com.github.togrul2.booklet.dtos.book.BookFilterDto;
 import com.github.togrul2.booklet.dtos.book.CreateBookDto;
 import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
 import com.github.togrul2.booklet.entities.Author;
@@ -80,7 +81,8 @@ public class BookServiceTests {
         Mockito
                 .when(bookRepository.findAll(PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(books));
-        Page<BookDto> result = bookService.findAll(PageRequest.of(0, 10));
+        BookFilterDto bookFilterDto = BookFilterDto.builder().title("War and peace").build();
+        Page<BookDto> result = bookService.findAll(PageRequest.of(0, 10), bookFilterDto);
         // Verify that the method findAll() of bookRepository was called once.
         Assertions.assertNotNull(result);
         Assertions.assertEquals(1, result.getTotalElements());

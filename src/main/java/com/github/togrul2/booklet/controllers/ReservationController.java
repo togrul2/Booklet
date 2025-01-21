@@ -8,6 +8,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +30,13 @@ public class ReservationController {
     private final ReservationService reservationService;
 
     @GetMapping
+    @Cacheable(value = "reservations", key = "#pageable")
     public Page<ReservationDto> findAll(@ParameterObject Pageable pageable) {
         return reservationService.findAll(pageable);
     }
 
     @PostMapping
+    @CacheEvict(value = {"reservations", "authUserReservations"}, allEntries = true)
     public ResponseEntity<Void> create(
             @RequestBody @Valid CreateReservationDto requestBody,
             @AuthenticationPrincipal UserDetails userDetails
@@ -44,11 +50,19 @@ public class ReservationController {
     }
 
     @GetMapping("/{id}")
+    @Cacheable(value = "reservation", key = "#id")
     public ReservationDto findById(@PathVariable long id) {
         return reservationService.findById(id);
     }
 
     @PutMapping("/{id}")
+    @Caching(
+            put = @CachePut(value = "reservation", key = "#id"),
+            evict = @CacheEvict(
+                    value = {"reservations", "authUserReservations", "authUserReservation"},
+                    allEntries = true
+            )
+    )
     public ReservationDto replace(
             @PathVariable long id, @RequestBody @Valid CreateReservationDto requestBody
     ) {
@@ -56,6 +70,13 @@ public class ReservationController {
     }
 
     @PatchMapping("/{id}")
+    @Caching(
+            put = @CachePut(value = "reservation", key = "#id"),
+            evict = @CacheEvict(
+                    value = {"reservations", "authUserReservations", "authUserReservation"},
+                    allEntries = true
+            )
+    )
     public ReservationDto update(
             @PathVariable long id, @RequestBody @Valid UpdateReservationDto requestBody
     ) {
@@ -63,6 +84,15 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{id}")
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "reservation", key = "#id"),
+                    @CacheEvict(
+                            value = {"reservations", "authUserReservations", "authUserReservation"},
+                            allEntries = true
+                    )
+            }
+    )
     public ResponseEntity<Void> delete(@PathVariable long id) {
         reservationService.delete(id);
         return ResponseEntity.noContent().build();

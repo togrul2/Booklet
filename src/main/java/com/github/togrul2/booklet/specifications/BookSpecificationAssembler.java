@@ -24,41 +24,45 @@ import java.util.Optional;
  * </p>
  */
 @Builder
-public class BookSpecificationAssembler implements SpecificationAssembler<Book> {
+public class BookSpecificationAssembler extends SpecificationAssembler<Book> {
     private final BookFilterDto filterDto;
 
-    private Optional<Specification<Book>> getTitleSpecification() {
-        if (filterDto.title() != null)
-            return Optional.of((root, _, builder) ->
-                    builder.like(builder.lower(root.get("title")), "%" + filterDto.title().toLowerCase() + "%"));
+    private Optional<Specification<Book>> byTitle() {
+        if (filterDto.title() != null) {
+            return Optional.of(buildIlikeSearchSpecification("title", filterDto.title()));
+        }
         return Optional.empty();
     }
 
-    private Optional<Specification<Book>> getAuthorSpecification() {
+    private Optional<Specification<Book>> byAuthor() {
         if (filterDto.authorId() != null) {
-            return Optional.of((root, _, builder) ->
-                    builder.equal(root.get("author").get("id"), filterDto.authorId()));
+            return Optional.of(
+                    (root, _, builder) ->
+                            builder.equal(root.get("author").get("id"), filterDto.authorId())
+            );
         }
         return Optional.empty();
     }
 
-    private Optional<Specification<Book>> getGenreSpecification() {
+    private Optional<Specification<Book>> byGenre() {
         if (filterDto.genreId() != null) {
-            return Optional.of((root, _, builder) ->
-                    builder.equal(root.get("genre").get("id"), filterDto.genreId()));
+            return Optional.of(
+                    (root, _, builder) -> builder.equal(root.get("genre").get("id"), filterDto.genreId())
+            );
         }
         return Optional.empty();
     }
 
-    private Optional<Specification<Book>> getIsbnSpecification() {
+    private Optional<Specification<Book>> byIsbn() {
         if (filterDto.isbn() != null) {
-            return Optional.of((root, _, builder) ->
-                    builder.equal(root.get("isbn"), filterDto.isbn()));
+            return Optional.of(
+                    (root, _, builder) -> builder.equal(root.get("isbn"), filterDto.isbn())
+            );
         }
         return Optional.empty();
     }
 
-    private Optional<Specification<Book>> getYearSpecification() {
+    private Optional<Specification<Book>> byYear() {
         if (filterDto.minYear() != null && filterDto.maxYear() != null) {
             return Optional.of((root, _, builder) ->
                     builder.between(root.get("year"), filterDto.minYear(), filterDto.maxYear()));
@@ -75,11 +79,11 @@ public class BookSpecificationAssembler implements SpecificationAssembler<Book> 
     @Override
     public Optional<Specification<Book>> getSpecification() {
         List<Specification<Book>> specifications = new ArrayList<>();
-        getTitleSpecification().ifPresent(specifications::add);
-        getAuthorSpecification().ifPresent(specifications::add);
-        getGenreSpecification().ifPresent(specifications::add);
-        getIsbnSpecification().ifPresent(specifications::add);
-        getYearSpecification().ifPresent(specifications::add);
+        byTitle().ifPresent(specifications::add);
+        byAuthor().ifPresent(specifications::add);
+        byGenre().ifPresent(specifications::add);
+        byIsbn().ifPresent(specifications::add);
+        byYear().ifPresent(specifications::add);
         return specifications.stream().reduce(Specification::and);
     }
 }

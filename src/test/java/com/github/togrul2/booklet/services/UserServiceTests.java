@@ -2,6 +2,7 @@ package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.dtos.user.CreateUserDto;
 import com.github.togrul2.booklet.dtos.user.UserDto;
+import com.github.togrul2.booklet.dtos.user.UserFilterDto;
 import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -108,7 +109,8 @@ public class UserServiceTests {
                 .when(userRepository.findAll(pageable))
                 .thenReturn(new PageImpl<>(List.of(user)));
 
-        Page<UserDto> users = userService.findAll(pageable);
+        UserFilterDto filter = UserFilterDto.builder().email("johndoe").build();
+        Page<UserDto> users = userService.findAll(pageable, filter);
         Assertions.assertNotNull(users);
         Assertions.assertEquals(1, users.getTotalElements());
         Mockito

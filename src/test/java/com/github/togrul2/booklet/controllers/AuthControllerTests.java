@@ -52,6 +52,7 @@ public class AuthControllerTests {
                 .firstName("John")
                 .lastName("Doe")
                 .role(Role.USER)
+                .active(true)
                 .email("test@example.com")
                 .password(passwordEncoder.encode(userPassword))
                 .build();

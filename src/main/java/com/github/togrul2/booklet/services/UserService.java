@@ -1,9 +1,6 @@
 package com.github.togrul2.booklet.services;
 
-import com.github.togrul2.booklet.dtos.user.CreateUserDto;
-import com.github.togrul2.booklet.dtos.user.PartialUpdateUserDto;
-import com.github.togrul2.booklet.dtos.user.UpdateUserDto;
-import com.github.togrul2.booklet.dtos.user.UserDto;
+import com.github.togrul2.booklet.dtos.user.*;
 import com.github.togrul2.booklet.entities.Role;
 import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.mappers.UserMapper;
@@ -11,16 +8,18 @@ import com.github.togrul2.booklet.repositories.UserRepository;
 import com.github.togrul2.booklet.security.annotations.IsAdmin;
 import com.github.togrul2.booklet.security.annotations.IsAuthenticated;
 import com.github.togrul2.booklet.security.annotations.IsUser;
+import com.github.togrul2.booklet.specifications.UserSpecificationAssembler;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -59,11 +58,19 @@ public class UserService {
     }
 
     @IsAdmin
-    public Page<UserDto> findAll(Pageable pageable) {
-        return userRepository.findAll(pageable).map(UserMapper.INSTANCE::toUserDto);
+    public Page<UserDto> findAll(Pageable pageable, UserFilterDto filterDto) {
+        Optional<Specification<User>> specification = UserSpecificationAssembler
+                .builder()
+                .filterDto(filterDto)
+                .build()
+                .getSpecification();
+        return specification
+                .map(s -> userRepository.findAll(s, pageable))
+                .orElseGet(() -> userRepository.findAll(pageable))
+                .map(UserMapper.INSTANCE::toUserDto);
     }
 
-    @PostAuthorize("hasRole('ADMIN') or returnObject.email == principal.username")
+    @IsUser
     public UserDto findById(long id) {
         return userRepository
                 .findById(id)
