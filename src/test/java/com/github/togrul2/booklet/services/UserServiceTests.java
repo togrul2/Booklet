@@ -8,7 +8,6 @@ import com.github.togrul2.booklet.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -133,7 +132,6 @@ public class UserServiceTests {
     }
 
     @Test
-    @Disabled
     public void testFindByIdWithNonExistingUser() {
         Mockito
                 .when(userRepository.findById(Mockito.anyLong()))

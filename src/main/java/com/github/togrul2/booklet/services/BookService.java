@@ -11,7 +11,7 @@ import com.github.togrul2.booklet.mappers.BookMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.GenreRepository;
-import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import com.github.togrul2.booklet.annotations.IsAdmin;
 import com.github.togrul2.booklet.specifications.BookSpecificationAssembler;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;

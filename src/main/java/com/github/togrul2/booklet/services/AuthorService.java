@@ -7,7 +7,7 @@ import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
 import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.mappers.AuthorMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
-import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import com.github.togrul2.booklet.annotations.IsAdmin;
 import com.github.togrul2.booklet.specifications.AuthorSpecificationAssembler;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;

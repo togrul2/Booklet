@@ -1,9 +1,13 @@
 package com.github.togrul2.booklet.controllers;
 
+import com.github.togrul2.booklet.annotations.ApiErrorResponses;
 import com.github.togrul2.booklet.dtos.reservation.CreateReservationDto;
 import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
 import com.github.togrul2.booklet.dtos.reservation.UpdateReservationDto;
 import com.github.togrul2.booklet.services.ReservationService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +27,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 
 @RestController
+@ApiErrorResponses
 @RequiredArgsConstructor
 @Tag(name = "Reservations")
 @RequestMapping("/api/v1/reservations")
@@ -31,12 +36,14 @@ public class ReservationController {
 
     @GetMapping
     @Cacheable(value = "reservations", key = "#pageable")
+    @ApiResponse(responseCode = "200", description = "Ok")
     public Page<ReservationDto> findAll(@ParameterObject Pageable pageable) {
         return reservationService.findAll(pageable);
     }
 
     @PostMapping
     @CacheEvict(value = {"reservations", "authUserReservations"}, allEntries = true)
+    @ApiResponse(responseCode = "201", description = "Created")
     public ResponseEntity<Void> create(
             @RequestBody @Valid CreateReservationDto requestBody,
             @AuthenticationPrincipal UserDetails userDetails
@@ -51,6 +58,7 @@ public class ReservationController {
 
     @GetMapping("/{id}")
     @Cacheable(value = "reservation", key = "#id")
+    @ApiResponse(responseCode = "200", description = "Ok")
     public ReservationDto findById(@PathVariable long id) {
         return reservationService.findById(id);
     }
@@ -63,6 +71,11 @@ public class ReservationController {
                     allEntries = true
             )
     )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Ok",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ReservationDto.class))
+    )
     public ReservationDto replace(
             @PathVariable long id, @RequestBody @Valid CreateReservationDto requestBody
     ) {
@@ -70,6 +83,11 @@ public class ReservationController {
     }
 
     @PatchMapping("/{id}")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Ok",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ReservationDto.class))
+    )
     @Caching(
             put = @CachePut(value = "reservation", key = "#id"),
             evict = @CacheEvict(
@@ -84,6 +102,7 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{id}")
+    @ApiResponse(responseCode = "204", description = "No Content")
     @Caching(
             evict = {
                     @CacheEvict(value = "reservation", key = "#id"),

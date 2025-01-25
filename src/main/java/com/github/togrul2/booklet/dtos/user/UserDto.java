@@ -2,6 +2,8 @@ package com.github.togrul2.booklet.dtos.user;
 
 import com.github.togrul2.booklet.entities.Role;
 
+import java.io.Serializable;
+
 public record UserDto(
         long id,
         String email,
@@ -11,5 +13,5 @@ public record UserDto(
         String creationDate,
         String modificationDate,
         Role role
-) {
+) implements Serializable {
 }

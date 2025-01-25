@@ -1,12 +1,13 @@
 package com.github.togrul2.booklet.controllers;
 
+import com.github.togrul2.booklet.annotations.ApiErrorResponses;
 import com.github.togrul2.booklet.dtos.genre.CreateGenreDto;
 import com.github.togrul2.booklet.dtos.genre.GenreDto;
 import com.github.togrul2.booklet.dtos.genre.UpdateGenreDto;
 import com.github.togrul2.booklet.services.GenreService;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
+@ApiErrorResponses
 @AllArgsConstructor
 @Tag(name = "Genres")
 @RequestMapping("/api/v1/genres")
@@ -30,25 +32,14 @@ public class GenreController {
 
     @GetMapping
     @Cacheable(cacheNames = "genres")
+    @ApiResponse(responseCode = "200", description = "Ok")
     public List<GenreDto> findAll() {
         return genreService.findAll();
     }
 
     @PostMapping
     @CacheEvict(cacheNames = "genres", allEntries = true)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Genre created"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid input",
-                    content = @Content(mediaType = "application/json")
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Taken attribute",
-                    content = @Content(mediaType = "application/json")
-            )
-    })
+    @ApiResponse(responseCode = "201", description = "Created", content = @Content(mediaType = "application/json"))
     public ResponseEntity<Void> create(@RequestBody @Valid CreateGenreDto createGenreDto) {
         GenreDto createdGenre = genreService.create(createGenreDto);
         URI uri = ServletUriComponentsBuilder
@@ -61,14 +52,7 @@ public class GenreController {
 
     @GetMapping("/{id}")
     @Cacheable(cacheNames = "genre", key = "#id")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Genre found"),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Genre not found",
-                    content = @Content(mediaType = "application/json")
-            )
-    })
+    @ApiResponse(responseCode = "200", description = "Ok")
     public GenreDto findById(@PathVariable long id) {
         return genreService.findById(id);
     }
@@ -78,19 +62,11 @@ public class GenreController {
             put = @CachePut(cacheNames = "genre", key = "#id"),
             evict = @CacheEvict(cacheNames = {"genres", "book", "books"}, allEntries = true)
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Genre created"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid input",
-                    content = @Content(mediaType = "application/json")
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Taken attribute",
-                    content = @Content(mediaType = "application/json")
-            )
-    })
+    @ApiResponse(
+            responseCode = "200",
+            description = "Ok",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = GenreDto.class))
+    )
     public GenreDto replace(@PathVariable long id, @RequestBody @Valid CreateGenreDto createGenreDto) {
         return genreService.replace(id, createGenreDto);
     }
@@ -100,19 +76,11 @@ public class GenreController {
             put = @CachePut(cacheNames = "genre", key = "#id"),
             evict = @CacheEvict(cacheNames = {"genres", "book", "books"}, allEntries = true)
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Genre created"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid input",
-                    content = @Content(mediaType = "application/json")
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Taken attribute",
-                    content = @Content(mediaType = "application/json")
-            )
-    })
+    @ApiResponse(
+            responseCode = "200",
+            description = "Ok",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = GenreDto.class))
+    )
     public GenreDto update(@PathVariable long id, @RequestBody @Valid UpdateGenreDto updateGenreDto) {
         return genreService.update(id, updateGenreDto);
     }

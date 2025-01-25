@@ -21,8 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     @Query(
             "SELECT u FROM User u " +
-                    "WHERE u.id = ?1 AND u.email = ?#{ principal?.username } " +
-                    "OR ?#{principal?.authorities.contains('ROLE_ADMIN')} = true"
+                    "WHERE u.id = ?1" +
+                    " AND ( u.email = ?#{ principal?.username } OR ?#{ hasRole('ADMIN') } = true)"
     )
     Optional<User> findById(long id);
 }

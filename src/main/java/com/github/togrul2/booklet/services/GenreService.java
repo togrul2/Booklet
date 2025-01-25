@@ -6,7 +6,7 @@ import com.github.togrul2.booklet.dtos.genre.UpdateGenreDto;
 import com.github.togrul2.booklet.entities.Genre;
 import com.github.togrul2.booklet.mappers.GenreMapper;
 import com.github.togrul2.booklet.repositories.GenreRepository;
-import com.github.togrul2.booklet.security.annotations.IsAdmin;
+import com.github.togrul2.booklet.annotations.IsAdmin;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

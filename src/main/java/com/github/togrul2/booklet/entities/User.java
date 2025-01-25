@@ -45,7 +45,7 @@ public class User implements UserDetails {
     private String password;
     @Column(nullable = false)
     @ColumnDefault("true")
-    private Boolean active;
+    private boolean active;
     @CreationTimestamp
     private LocalDateTime creationDate;
     @UpdateTimestamp
