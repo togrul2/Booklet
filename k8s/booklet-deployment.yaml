@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booklet-deployment
+  labels:
+    app: booklet
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: booklet
+  template:
+    metadata:
+      labels:
+        app: booklet
+    spec:
+      containers:
+        - name: booklet
+          image: togrulir/booklet:latest
+          imagePullPolicy: Never
+          ports:
+            - protocol: TCP
+              containerPort: 8080
+          env:
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: booklet-secret
+                  key: jwt-secret-key
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: booklet-configmap
+                  key: redis-host
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: booklet-configmap
+                  key: redis_port
+            - name: DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: booklet-configmap
+                  key: db_url
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: booklet-secret
+                  key: db_username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: booklet-secret
+                  key: db_password
