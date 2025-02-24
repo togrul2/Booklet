@@ -1,5 +1,7 @@
 package com.github.togrul2.booklet.services;
 
+import com.github.togrul2.booklet.annotations.IsAdmin;
+import com.github.togrul2.booklet.annotations.IsUser;
 import com.github.togrul2.booklet.dtos.reservation.CreateReservationDto;
 import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
 import com.github.togrul2.booklet.dtos.reservation.UpdateReservationDto;
@@ -10,20 +12,18 @@ import com.github.togrul2.booklet.mappers.ReservationMapper;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.ReservationRepository;
 import com.github.togrul2.booklet.repositories.UserRepository;
-import com.github.togrul2.booklet.annotations.IsAdmin;
-import com.github.togrul2.booklet.annotations.IsUser;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -39,7 +39,7 @@ public class ReservationService {
         return reservationRepository
                 .findById(id)
                 .map(ReservationMapper.INSTANCE::toReservationDto)
-                .orElseThrow(() -> new EntityNotFoundException("Reservation not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found."));
     }
 
     @IsAdmin
@@ -61,7 +61,7 @@ public class ReservationService {
         return reservationRepository
                 .findByIdForAuthUser(id)
                 .map(ReservationMapper.INSTANCE::toReservationDto)
-                .orElseThrow(() -> new EntityNotFoundException("Reservation not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found."));
     }
 
     /**
@@ -98,10 +98,10 @@ public class ReservationService {
         Reservation reservation = ReservationMapper.INSTANCE.toReservation(reservationDto);
         User user = userRepository
                 .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
         Book book = bookRepository
                 .findById(reservationDto.bookId())
-                .orElseThrow(() -> new EntityNotFoundException("Book not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found."));
         reservation.setUser(user);
         reservation.setBook(book);
 
@@ -113,14 +113,14 @@ public class ReservationService {
     public ReservationDto replace(long id, @NonNull CreateReservationDto requestBody) {
         // Check if the reservation exists.
         if (!reservationRepository.existsById(id)) {
-            throw new EntityNotFoundException("Reservation not found.");
+            throw new ResourceNotFoundException("Reservation not found.");
         }
 
         // Create reservation instance.
         Reservation reservation = ReservationMapper.INSTANCE.toReservation(requestBody);
         Book book = bookRepository
                 .findById(requestBody.bookId())
-                .orElseThrow(() -> new EntityNotFoundException("Book not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found."));
         reservation.setBook(book);
 
         validateReservation(reservation);
@@ -131,23 +131,19 @@ public class ReservationService {
     public ReservationDto update(long id, @NonNull UpdateReservationDto requestBody) {
         Reservation reservation = reservationRepository
                 .findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Reservation not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found."));
 
         // Update reservation fields if provided.
-        if (!Objects.isNull(requestBody.startDate())) {
-            reservation.setStartDate(requestBody.startDate());
-        }
-
-        if (!Objects.isNull(requestBody.endDate())) {
-            reservation.setEndDate(requestBody.endDate());
-        }
-
-        if (!Objects.isNull(requestBody.bookId())) {
-            Book book = bookRepository
-                    .findById(requestBody.bookId())
-                    .orElseThrow(() -> new EntityNotFoundException("Book not found."));
-            reservation.setBook(book);
-        }
+        Optional.ofNullable(requestBody.startDate()).ifPresent(reservation::setStartDate);
+        Optional.ofNullable(requestBody.endDate()).ifPresent(reservation::setEndDate);
+        Optional
+                .ofNullable(requestBody.bookId())
+                .ifPresent(bookId -> {
+                    Book book = bookRepository
+                            .findById(bookId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Book not found."));
+                    reservation.setBook(book);
+                });
 
         validateReservation(reservation);
         return ReservationMapper.INSTANCE.toReservationDto(reservationRepository.save(reservation));
@@ -158,13 +154,13 @@ public class ReservationService {
      * If user is not an admin, the reservation must belong to the authenticated user.
      *
      * @param id The id of the reservation to delete.
-     * @throws EntityNotFoundException the reservation does not exist.
+     * @throws ResourceNotFoundException() the reservation does not exist.
      */
     @IsUser
     public void delete(long id) {
         Reservation reservation = reservationRepository
                 .findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Reservation not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found."));
         reservationRepository.delete(reservation);
     }
 }

@@ -83,14 +83,4 @@ public class GlobalExceptionAdvice extends ResponseEntityExceptionHandler {
         log.warn("JWT exception: {}", e.getMessage());
         response.sendError(HttpStatus.UNAUTHORIZED.value());
     }
-
-    /**
-     * Handle EntityNotFoundException
-     * An exception is thrown when an entity is not found in the database.
-     */
-    @ExceptionHandler(EntityNotFoundException.class)
-    private void handleEntityNotFoundException(RuntimeException e, HttpServletResponse response) throws IOException {
-        log.warn("Entity not found exception: {}", e.getMessage());
-        response.sendError(HttpStatus.NOT_FOUND.value());
-    }
 }

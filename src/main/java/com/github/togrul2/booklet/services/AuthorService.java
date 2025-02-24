@@ -67,21 +67,12 @@ public class AuthorService {
                 .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Author not found."));
 
-        if (updateAuthorDto.name() != null) {
-            author.setName(updateAuthorDto.name());
-        }
-        if (updateAuthorDto.surname() != null) {
-            author.setSurname(updateAuthorDto.surname());
-        }
-        if (updateAuthorDto.birthDate() != null) {
-            author.setBirthDate(updateAuthorDto.birthDate());
-        }
-        if (updateAuthorDto.deathDate() != null) {
-            author.setDeathDate(updateAuthorDto.deathDate());
-        }
-        if (updateAuthorDto.biography() != null) {
-            author.setBiography(updateAuthorDto.biography());
-        }
+        // Update fields if they are present in the request body.
+        Optional.ofNullable(updateAuthorDto.name()).ifPresent(author::setName);
+        Optional.ofNullable(updateAuthorDto.surname()).ifPresent(author::setSurname);
+        Optional.ofNullable(updateAuthorDto.birthDate()).ifPresent(author::setBirthDate);
+        Optional.ofNullable(updateAuthorDto.deathDate()).ifPresent(author::setDeathDate);
+        Optional.ofNullable(updateAuthorDto.biography()).ifPresent(author::setBiography);
 
         return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }

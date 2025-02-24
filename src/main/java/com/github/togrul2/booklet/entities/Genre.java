@@ -6,12 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Data
 @Entity
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Genre {
+public class Genre implements Serializable {
     public final static int NAME_MAX_LENGTH = 50;
 
     @Id

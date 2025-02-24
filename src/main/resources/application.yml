@@ -1,11 +1,20 @@
 spring:
-  cache:
-    type: redis
+  main:
+    allow-bean-definition-overriding: true
+  data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
-      cache-null-values: false
+    rest:
+      base-path: /api/v1
+      detection-strategy: annotated
+
+  cache:
+    type: redis
+    redis:
       time-to-live: 60000
+      cache-null-values: false
+      key-prefix: "booklet:"
 
   application:
     name: booklet

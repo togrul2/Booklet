@@ -47,6 +47,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     // https://mvnrepository.com/artifact/org.springframework.security/spring-security-data
     implementation 'org.springframework.security:spring-security-data:6.4.2'
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
 
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2', 'org.projectlombok:lombok', 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
