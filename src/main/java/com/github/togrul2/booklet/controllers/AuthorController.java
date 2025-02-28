@@ -3,8 +3,8 @@ package com.github.togrul2.booklet.controllers;
 import com.github.togrul2.booklet.annotations.ApiErrorResponses;
 import com.github.togrul2.booklet.dtos.author.AuthorDto;
 import com.github.togrul2.booklet.dtos.author.AuthorFilterDto;
-import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
-import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
+import com.github.togrul2.booklet.dtos.author.AuthorRequestDto;
+import com.github.togrul2.booklet.dtos.author.CreateAuthor;
 import com.github.togrul2.booklet.services.AuthorService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,6 +20,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -50,7 +51,7 @@ public class AuthorController {
     @PostMapping
     @CacheEvict(cacheNames = "authors", allEntries = true)
     @ApiResponse(responseCode = "201", description = "Created", content = @Content(mediaType = "application/json"))
-    public ResponseEntity<Void> create(@RequestBody @Valid CreateAuthorDto createAuthorDto) {
+    public ResponseEntity<Void> create(@RequestBody @Valid AuthorRequestDto createAuthorDto) {
         AuthorDto authorDto = authorService.create(createAuthorDto);
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -70,8 +71,10 @@ public class AuthorController {
             put = @CachePut(cacheNames = "author", key = "#id"),
             evict = @CacheEvict(cacheNames = {"authors", "books", "book"}, allEntries = true)
     )
-    public AuthorDto replace(@PathVariable long id, @RequestBody @Valid CreateAuthorDto createAuthorDto) {
-        return authorService.replace(id, createAuthorDto);
+    public AuthorDto replace(
+            @PathVariable long id, @RequestBody @Validated(CreateAuthor.class) AuthorRequestDto authorRequestDto
+    ) {
+        return authorService.update(id, authorRequestDto);
     }
 
     @PatchMapping("/{id}")
@@ -84,8 +87,10 @@ public class AuthorController {
             put = @CachePut(cacheNames = "author", key = "#id"),
             evict = @CacheEvict(cacheNames = {"authors", "books", "book"}, allEntries = true)
     )
-    public AuthorDto update(@PathVariable long id, @RequestBody @Valid UpdateAuthorDto updateAuthorDto) {
-        return authorService.update(id, updateAuthorDto);
+    public AuthorDto update(
+            @PathVariable long id, @RequestBody @Validated(CreateAuthor.class) AuthorRequestDto authorRequestDto
+    ) {
+        return authorService.update(id, authorRequestDto);
     }
 
     @DeleteMapping("/{id}")

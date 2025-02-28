@@ -9,6 +9,7 @@ import com.github.togrul2.booklet.annotations.IsAdmin;
 import com.github.togrul2.booklet.annotations.IsAuthenticated;
 import com.github.togrul2.booklet.annotations.IsUser;
 import com.github.togrul2.booklet.specifications.UserSpecificationAssembler;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -78,50 +79,27 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found."));
     }
 
-    private UserDto replaceUser(User user, UpdateUserDto updateUserDto) {
-        user.setEmail(updateUserDto.email());
-        user.setFirstName(updateUserDto.firstName());
-        user.setLastName(updateUserDto.lastName());
+    private UserDto updateUser(User user, UpdateUserDto updateUserDto) {
+        Optional.ofNullable(updateUserDto.email()).ifPresent(user::setEmail);
+        Optional.ofNullable(updateUserDto.firstName()).ifPresent(user::setFirstName);
+        Optional.ofNullable(updateUserDto.lastName()).ifPresent(user::setLastName);
         validateUser(user);
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
-    }
-
-    private UserDto updateUser(User user, PartialUpdateUserDto partialUpdateUserDto) {
-        Optional.ofNullable(partialUpdateUserDto.email()).ifPresent(user::setEmail);
-        Optional.ofNullable(partialUpdateUserDto.firstName()).ifPresent(user::setFirstName);
-        Optional.ofNullable(partialUpdateUserDto.lastName()).ifPresent(user::setLastName);
-        validateUser(user);
-        return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
-    }
-
-    /**
-     * Replaces user with given id. Authenticated user must be an admin or target user.
-     *
-     * @param id            id of user to update.
-     * @param updateUserDto request dto.
-     * @return updated user.
-     * @throws IllegalArgumentException If email is already taken.
-     * @throws ResourceNotFoundException()  If user with given id does not exist.
-     */
-    @IsUser
-    public UserDto replace(long id, UpdateUserDto updateUserDto) {
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found."));
-        return replaceUser(user, updateUserDto);
     }
 
     /**
      * Updates user with given id. Authenticated user must be an admin or target user.
      *
      * @param id                   id of user to update.
-     * @param partialUpdateUserDto request dto.
+     * @param updateUserDto request dto.
      * @return updated user.
      * @throws IllegalArgumentException If email is already taken.
      * @throws ResourceNotFoundException()  If user with given id does not exist.
      */
     @IsUser
-    public UserDto update(long id, PartialUpdateUserDto partialUpdateUserDto) {
+    public UserDto update(long id, @Valid UpdateUserDto updateUserDto) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found."));
-        return updateUser(user, partialUpdateUserDto);
+        return updateUser(user, updateUserDto);
     }
 
     /**
@@ -151,15 +129,9 @@ public class UserService {
     }
 
     @IsAuthenticated
-    public UserDto replaceAuthUser(UpdateUserDto updateUserDto) {
+    public UserDto updateAuthUser(UpdateUserDto updateUserDto) {
         User user = userRepository.findAuthUser().orElseThrow(() -> new ResourceNotFoundException("User not found."));
-        return replaceUser(user, updateUserDto);
-    }
-
-    @IsAuthenticated
-    public UserDto updateAuthUser(PartialUpdateUserDto partialUpdateUserDto) {
-        User user = userRepository.findAuthUser().orElseThrow(() -> new ResourceNotFoundException("User not found."));
-        return updateUser(user, partialUpdateUserDto);
+        return updateUser(user, updateUserDto);
     }
 
     @IsAuthenticated

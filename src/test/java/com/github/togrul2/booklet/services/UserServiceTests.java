@@ -5,7 +5,6 @@ import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.dtos.user.UserFilterDto;
 import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.repositories.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -136,7 +136,7 @@ public class UserServiceTests {
         Mockito
                 .when(userRepository.findById(Mockito.anyLong()))
                 .thenReturn(java.util.Optional.empty());
-        Assertions.assertThrows(EntityNotFoundException.class, () -> userService.findById(1L));
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> userService.findById(1L));
         Mockito
                 .verify(userRepository, Mockito.times(1))
                 .findById(Mockito.anyLong());

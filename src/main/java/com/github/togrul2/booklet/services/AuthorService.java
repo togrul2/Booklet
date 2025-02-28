@@ -1,13 +1,12 @@
 package com.github.togrul2.booklet.services;
 
+import com.github.togrul2.booklet.annotations.IsAdmin;
 import com.github.togrul2.booklet.dtos.author.AuthorDto;
 import com.github.togrul2.booklet.dtos.author.AuthorFilterDto;
-import com.github.togrul2.booklet.dtos.author.CreateAuthorDto;
-import com.github.togrul2.booklet.dtos.author.UpdateAuthorDto;
+import com.github.togrul2.booklet.dtos.author.AuthorRequestDto;
 import com.github.togrul2.booklet.entities.Author;
 import com.github.togrul2.booklet.mappers.AuthorMapper;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
-import com.github.togrul2.booklet.annotations.IsAdmin;
 import com.github.togrul2.booklet.specifications.AuthorSpecificationAssembler;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
@@ -45,34 +44,23 @@ public class AuthorService {
     }
 
     @IsAdmin
-    public AuthorDto create(CreateAuthorDto createAuthorDto) {
+    public AuthorDto create(AuthorRequestDto createAuthorDto) {
         Author author = AuthorMapper.INSTANCE.toAuthor(createAuthorDto);
         return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }
 
     @IsAdmin
-    public AuthorDto replace(long id, CreateAuthorDto createAuthorDto) {
-        if (!authorRepository.existsById(id)) {
-            throw new EntityNotFoundException("Author not found.");
-        }
-
-        Author author = AuthorMapper.INSTANCE.toAuthor(createAuthorDto);
-        author.setId(id);
-        return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
-    }
-
-    @IsAdmin
-    public AuthorDto update(long id, UpdateAuthorDto updateAuthorDto) {
+    public AuthorDto update(long id, AuthorRequestDto authorRequestDto) {
         Author author = authorRepository
                 .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Author not found."));
 
         // Update fields if they are present in the request body.
-        Optional.ofNullable(updateAuthorDto.name()).ifPresent(author::setName);
-        Optional.ofNullable(updateAuthorDto.surname()).ifPresent(author::setSurname);
-        Optional.ofNullable(updateAuthorDto.birthDate()).ifPresent(author::setBirthDate);
-        Optional.ofNullable(updateAuthorDto.deathDate()).ifPresent(author::setDeathDate);
-        Optional.ofNullable(updateAuthorDto.biography()).ifPresent(author::setBiography);
+        Optional.ofNullable(authorRequestDto.name()).ifPresent(author::setName);
+        Optional.ofNullable(authorRequestDto.surname()).ifPresent(author::setSurname);
+        Optional.ofNullable(authorRequestDto.birthDate()).ifPresent(author::setBirthDate);
+        Optional.ofNullable(authorRequestDto.deathDate()).ifPresent(author::setDeathDate);
+        Optional.ofNullable(authorRequestDto.biography()).ifPresent(author::setBiography);
 
         return AuthorMapper.INSTANCE.toAuthorDto(authorRepository.save(author));
     }

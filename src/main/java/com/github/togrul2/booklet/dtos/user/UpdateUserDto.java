@@ -5,13 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdateUserDto(
-        @Email
+        @Email(groups = {UpdateUser.class, CreateUser.class})
         String email,
-        @NotBlank
-        @NotNull
+        @NotBlank(groups = CreateUser.class)
+        @NotNull(groups = CreateUser.class)
         String firstName,
-        @NotBlank
-        @NotNull
+        @NotBlank(groups = CreateUser.class)
+        @NotNull(groups = CreateUser.class)
         String lastName
 ) {
 }

@@ -1,10 +1,7 @@
 package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.annotations.ApiErrorResponses;
-import com.github.togrul2.booklet.dtos.book.BookDto;
-import com.github.togrul2.booklet.dtos.book.BookFilterDto;
-import com.github.togrul2.booklet.dtos.book.CreateBookDto;
-import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
+import com.github.togrul2.booklet.dtos.book.*;
 import com.github.togrul2.booklet.services.BookService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,6 +17,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -50,8 +48,8 @@ public class BookController {
     @PostMapping
     @CacheEvict(cacheNames = "books", allEntries = true)
     @ApiResponse(responseCode = "201", description = "Created", content = @Content(mediaType = "application/json"))
-    public ResponseEntity<Void> createBook(@RequestBody CreateBookDto createBookDto) {
-        BookDto bookDto = bookService.create(createBookDto);
+    public ResponseEntity<Void> createBook(@RequestBody @Validated(CreateBook.class) BookRequestDto bookRequestDto) {
+        BookDto bookDto = bookService.create(bookRequestDto);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(bookDto.id())
@@ -69,8 +67,11 @@ public class BookController {
             description = "Ok",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = BookDto.class))
     )
-    public BookDto replaceBook(@PathVariable long id, @RequestBody @Valid CreateBookDto createBookDto) {
-        return bookService.replace(id, createBookDto);
+    public BookDto replaceBook(
+            @PathVariable long id,
+            @RequestBody @Validated(CreateBook.class) BookRequestDto bookRequestDto
+    ) {
+        return bookService.update(id, bookRequestDto);
     }
 
     @PatchMapping("/{id}")
@@ -83,8 +84,8 @@ public class BookController {
             description = "Ok",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = BookDto.class))
     )
-    public BookDto updateBook(@PathVariable long id, @RequestBody @Valid UpdateBookDto updateBookDto) {
-        return bookService.update(id, updateBookDto);
+    public BookDto updateBook(@PathVariable long id, @RequestBody @Validated(UpdateBook.class) BookRequestDto bookRequestDto) {
+        return bookService.update(id, bookRequestDto);
     }
 
     @DeleteMapping("/{id}")

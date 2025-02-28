@@ -1,6 +1,5 @@
 package com.github.togrul2.booklet.controllers;
 
-import com.github.togrul2.booklet.annotations.WithMockAdminUser;
 import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.entities.Role;
 import com.github.togrul2.booklet.entities.User;
@@ -12,10 +11,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@WithMockAdminUser
+@WithMockUser
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -48,7 +48,6 @@ public class UserControllerTests {
     }
 
     @Test
-    @Disabled
     public void testGetAuthUser() {
         ResponseEntity<UserDto> response = restTemplate.getForEntity(
             domain + "/api/v1/users/me", UserDto.class

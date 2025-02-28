@@ -2,8 +2,7 @@ package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.annotations.WithMockAdminUser;
 import com.github.togrul2.booklet.dtos.book.BookDto;
-import com.github.togrul2.booklet.dtos.book.CreateBookDto;
-import com.github.togrul2.booklet.dtos.book.UpdateBookDto;
+import com.github.togrul2.booklet.dtos.book.BookRequestDto;
 import com.github.togrul2.booklet.entities.*;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
@@ -18,7 +17,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -54,6 +52,7 @@ public class BookControllerTests {
                         .biography("Lorem ipsum dolor sit amet")
                         .build()
         );
+        // Create a genre fails due to access restrictions.
         Genre genre = genreRepository.save(
                 Genre.builder()
                         .name("Fantasy")
@@ -84,7 +83,6 @@ public class BookControllerTests {
 
     @Test
     @Disabled
-    @WithAnonymousUser
     public void testGetBooks() {
         ResponseEntity<PageImpl<BookDto>> response = restTemplate.exchange(
                 domain + "/api/v1/books", HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
@@ -94,7 +92,6 @@ public class BookControllerTests {
     }
 
     @Test
-    @WithAnonymousUser
     public void testGetBookById() {
         ResponseEntity<BookDto> response = restTemplate.getForEntity(
                 domain + "/api/v1/books/{id}", BookDto.class, book.getId()
@@ -104,13 +101,13 @@ public class BookControllerTests {
     }
 
     @Test
-    @Disabled
     public void testCreateBook() {
-        CreateBookDto bookDto = CreateBookDto.builder()
+        BookRequestDto bookDto = BookRequestDto.builder()
                 .title("Book 3")
                 .authorId(book.getAuthor().getId())
                 .genreId(book.getGenre().getId())
                 .isbn("1234567892")
+                .year(2000)
                 .build();
         ResponseEntity<BookDto> response = restTemplate
                 .postForEntity(domain + "/api/v1/books", bookDto, BookDto.class);
@@ -120,24 +117,8 @@ public class BookControllerTests {
     }
 
     @Test
-    @Disabled
-    public void testReplaceBook() {
-        CreateBookDto requestBody = CreateBookDto.builder()
-                .title("Book 2 updated")
-                .authorId(book.getAuthor().getId())
-                .genreId(book.getGenre().getId())
-                .isbn("1234567892")
-                .build();
-        restTemplate.put(domain + "/api/v1/books/{id}", requestBody, book.getId());
-        bookRepository
-                .findById(book.getId())
-                .ifPresent(book1 -> Assertions.assertEquals("Book 2 updated", book1.getTitle()));
-    }
-
-    @Test
-    @Disabled
     public void testUpdateBook() {
-        UpdateBookDto requestBody = UpdateBookDto.builder()
+        BookRequestDto requestBody = BookRequestDto.builder()
                 .title("Book 2 updated")
                 .build();
         restTemplate.patchForObject(domain + "/api/v1/books/{id}", requestBody, BookDto.class, book.getId());
@@ -147,7 +128,6 @@ public class BookControllerTests {
     }
 
     @Test
-    @Disabled
     public void testDeleteBook() {
         restTemplate.delete(domain + "/api/v1/books/{id}", book.getId());
         Assertions.assertFalse(bookRepository.existsById(book.getId()));

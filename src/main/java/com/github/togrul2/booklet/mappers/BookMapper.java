@@ -1,7 +1,7 @@
 package com.github.togrul2.booklet.mappers;
 
 import com.github.togrul2.booklet.dtos.book.BookDto;
-import com.github.togrul2.booklet.dtos.book.CreateBookDto;
+import com.github.togrul2.booklet.dtos.book.BookRequestDto;
 import com.github.togrul2.booklet.entities.Book;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,5 +16,5 @@ public interface BookMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "author", ignore = true)
     @Mapping(target = "genre", ignore = true)
-    Book toBook(CreateBookDto createBookDto);
+    Book toBook(BookRequestDto bookRequestDto);
 }

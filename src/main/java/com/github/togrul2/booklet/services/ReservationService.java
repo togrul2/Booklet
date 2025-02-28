@@ -2,9 +2,8 @@ package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.annotations.IsAdmin;
 import com.github.togrul2.booklet.annotations.IsUser;
-import com.github.togrul2.booklet.dtos.reservation.CreateReservationDto;
+import com.github.togrul2.booklet.dtos.reservation.ReservationRequestDto;
 import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
-import com.github.togrul2.booklet.dtos.reservation.UpdateReservationDto;
 import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Reservation;
 import com.github.togrul2.booklet.entities.User;
@@ -93,7 +92,7 @@ public class ReservationService {
     }
 
     @IsUser
-    public ReservationDto reserveBook(@NonNull UserDetails userDetails, @NonNull CreateReservationDto reservationDto) {
+    public ReservationDto reserveBook(@NonNull UserDetails userDetails, @NonNull ReservationRequestDto reservationDto) {
         // Create reservation instance.
         Reservation reservation = ReservationMapper.INSTANCE.toReservation(reservationDto);
         User user = userRepository
@@ -110,25 +109,7 @@ public class ReservationService {
     }
 
     @IsAdmin
-    public ReservationDto replace(long id, @NonNull CreateReservationDto requestBody) {
-        // Check if the reservation exists.
-        if (!reservationRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Reservation not found.");
-        }
-
-        // Create reservation instance.
-        Reservation reservation = ReservationMapper.INSTANCE.toReservation(requestBody);
-        Book book = bookRepository
-                .findById(requestBody.bookId())
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found."));
-        reservation.setBook(book);
-
-        validateReservation(reservation);
-        return ReservationMapper.INSTANCE.toReservationDto(reservationRepository.save(reservation));
-    }
-
-    @IsAdmin
-    public ReservationDto update(long id, @NonNull UpdateReservationDto requestBody) {
+    public ReservationDto update(long id, ReservationRequestDto requestBody) {
         Reservation reservation = reservationRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation not found."));

@@ -1,6 +1,6 @@
 package com.github.togrul2.booklet.services;
 
-import com.github.togrul2.booklet.dtos.reservation.CreateReservationDto;
+import com.github.togrul2.booklet.dtos.reservation.ReservationRequestDto;
 import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
 import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Reservation;
@@ -8,7 +8,6 @@ import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.ReservationRepository;
 import com.github.togrul2.booklet.repositories.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -38,7 +38,7 @@ public class ReservationServiceTests {
     private Reservation reservation;
     private User user;
     private Book book;
-    private CreateReservationDto createReservationDto;
+    private ReservationRequestDto reservationRequestDto;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +55,7 @@ public class ReservationServiceTests {
         reservation.setStartDate(LocalDateTime.now().plusDays(1));
         reservation.setEndDate(LocalDateTime.now().plusDays(2));
 
-        createReservationDto = new CreateReservationDto(1L, LocalDateTime.now().plusDays(1),
+        reservationRequestDto = new ReservationRequestDto(1L, LocalDateTime.now().plusDays(1),
                 LocalDateTime.now().plusDays(2));
     }
 
@@ -73,7 +73,7 @@ public class ReservationServiceTests {
     void testFindByIdThrowsEntityNotFoundException() {
         Mockito.when(reservationRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Assertions.assertThrows(EntityNotFoundException.class, () -> reservationService.findById(1L));
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> reservationService.findById(1L));
         Mockito.verify(reservationRepository).findById(1L);
     }
 
@@ -83,7 +83,7 @@ public class ReservationServiceTests {
         Mockito.when(bookRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(book));
         Mockito.when(reservationRepository.save(Mockito.any())).thenReturn(reservation);
 
-        ReservationDto result = reservationService.reserveBook(userDetails, createReservationDto);
+        ReservationDto result = reservationService.reserveBook(userDetails, reservationRequestDto);
 
         Assertions.assertNotNull(result);
         Mockito.verify(userRepository).findByEmail(Mockito.any());
@@ -95,25 +95,25 @@ public class ReservationServiceTests {
     void testReserveBookUserNotFound() {
         Mockito.when(userRepository.findByEmail(userDetails.getUsername())).thenReturn(Optional.empty());
 
-        Assertions.assertThrows(EntityNotFoundException.class, () -> reservationService.reserveBook(userDetails,
-                createReservationDto));
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> reservationService.reserveBook(userDetails,
+                reservationRequestDto));
 
         Mockito.verify(userRepository).findByEmail(userDetails.getUsername());
-        Mockito.verify(bookRepository, Mockito.never()).findById(createReservationDto.bookId());
+        Mockito.verify(bookRepository, Mockito.never()).findById(reservationRequestDto.bookId());
         Mockito.verify(reservationRepository, Mockito.never()).save(reservation);
     }
 
     @Test
     void testReserveBookBookNotFound() {
         Mockito.when(userRepository.findByEmail(userDetails.getUsername())).thenReturn(Optional.of(user));
-        Mockito.when(bookRepository.findById(createReservationDto.bookId())).thenReturn(Optional.empty());
+        Mockito.when(bookRepository.findById(reservationRequestDto.bookId())).thenReturn(Optional.empty());
 
-        Assertions.assertThrows(EntityNotFoundException.class, () -> reservationService.reserveBook(userDetails,
-                createReservationDto));
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> reservationService.reserveBook(userDetails,
+                reservationRequestDto));
 
         Mockito.verify(reservationRepository, Mockito.never()).save(reservation);
         Mockito.verify(userRepository).findByEmail(userDetails.getUsername());
-        Mockito.verify(bookRepository).findById(createReservationDto.bookId());
+        Mockito.verify(bookRepository).findById(reservationRequestDto.bookId());
     }
 
     @Test
@@ -130,7 +130,7 @@ public class ReservationServiceTests {
     void delete_ThrowsException_WhenReservationDoesNotExist() {
         Mockito.when(reservationRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Assertions.assertThrows(EntityNotFoundException.class, () -> reservationService.delete(1L));
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> reservationService.delete(1L));
         Mockito.verify(reservationRepository).findById(1L);
         Mockito.verify(reservationRepository, Mockito.never()).delete(reservation);
     }
