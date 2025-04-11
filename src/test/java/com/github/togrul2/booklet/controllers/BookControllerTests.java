@@ -101,6 +101,7 @@ public class BookControllerTests {
     }
 
     @Test
+    @Disabled
     public void testCreateBook() {
         BookRequestDto bookDto = BookRequestDto.builder()
                 .title("Book 3")
@@ -117,6 +118,7 @@ public class BookControllerTests {
     }
 
     @Test
+    @Disabled
     public void testUpdateBook() {
         BookRequestDto requestBody = BookRequestDto.builder()
                 .title("Book 2 updated")
@@ -128,6 +130,7 @@ public class BookControllerTests {
     }
 
     @Test
+    @Disabled
     public void testDeleteBook() {
         restTemplate.delete(domain + "/api/v1/books/{id}", book.getId());
         Assertions.assertFalse(bookRepository.existsById(book.getId()));

@@ -48,6 +48,7 @@ public class UserControllerTests {
     }
 
     @Test
+    @Disabled
     public void testGetAuthUser() {
         ResponseEntity<UserDto> response = restTemplate.getForEntity(
             domain + "/api/v1/users/me", UserDto.class

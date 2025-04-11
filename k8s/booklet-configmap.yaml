@@ -1,8 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: booklet-configmap
+  name: booklet-config
+  namespace: booklet
 data:
-  redis-host: "host.docker.internal"
-  redis_port: "6379"
-  db_url: "jdbc:postgresql://host.docker.internal:5432/booklet"
+  POSTGRES_DB: "booklet"
+  POSTGRES_HOST: "postgresl"
+  POSTGRES_PORT: "5432"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  JDBC_URL: "jdbc:postgresql://postgres:5432/booklet"
