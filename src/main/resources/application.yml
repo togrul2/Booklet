@@ -2,9 +2,6 @@ spring:
   main:
     allow-bean-definition-overriding: true
   data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
     rest:
       base-path: /api/v1
       detection-strategy: annotated
@@ -24,25 +21,28 @@ spring:
       connection-timeout: 20000
       maximum-pool-size: 5
 
-    url: ${JDBC_URL}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://postgres:5432/booklet
+    username: postgres
+    password: postgres
 
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: true  # to disable warning
 
-  security:
-    jwt:
-      secret-key: ${JWT_SECRET_KEY}
-
-server:
-  error:
-    include-stacktrace: on_param
-
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: debug, dev, local, test
+
+server:
+  error:
+    include-stacktrace: always
