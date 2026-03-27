@@ -19,6 +19,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +51,11 @@ public class AuthorController {
 
     @PostMapping
     @CacheEvict(cacheNames = "authors", allEntries = true)
-    @ApiResponse(responseCode = "201", description = "Created", content = @Content(mediaType = "application/json"))
+    @ApiResponse(
+            responseCode = "201",
+            description = "Created",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+    )
     public ResponseEntity<Void> create(@RequestBody @Valid AuthorRequestDto createAuthorDto) {
         AuthorDto authorDto = authorService.create(createAuthorDto);
         URI uri = ServletUriComponentsBuilder
@@ -65,7 +70,10 @@ public class AuthorController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthorDto.class))
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = AuthorDto.class)
+            )
     )
     @Caching(
             put = @CachePut(cacheNames = "author", key = "#id"),
@@ -81,7 +89,8 @@ public class AuthorController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthorDto.class))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation =
+                    AuthorDto.class))
     )
     @Caching(
             put = @CachePut(cacheNames = "author", key = "#id"),

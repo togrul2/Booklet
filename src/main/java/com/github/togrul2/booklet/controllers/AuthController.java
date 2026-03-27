@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +30,7 @@ public class AuthController {
             responseCode = "200",
             description = "Ok",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
                     schema = @Schema(implementation = TokenPairDto.class)
             )
     )
@@ -42,7 +43,7 @@ public class AuthController {
             responseCode = "200",
             description = "Ok",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
                     schema = @Schema(implementation = TokenPairDto.class)
             )
     )
@@ -51,13 +52,17 @@ public class AuthController {
     }
 
     @PostMapping("/validate")
-    @ApiResponse(responseCode = "200", description = "Ok", content = @Content(mediaType = "application/json"))
+    @ApiResponse(
+            responseCode = "200", description = "Ok", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+    )
     public void validate(@RequestBody @Valid RefreshRequestDto refreshRequestDto) {
         authService.validate(refreshRequestDto);
     }
 
     @PostMapping("/logout")
-    @ApiResponse(responseCode = "200", description = "Ok", content = @Content(mediaType = "application/json"))
+    @ApiResponse(
+            responseCode = "200", description = "Ok", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+    )
     public void logout(@RequestBody @Valid RefreshRequestDto refreshRequestDto) {
         authService.logout(refreshRequestDto);
     }

@@ -16,6 +16,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -47,7 +48,11 @@ public class BookController {
 
     @PostMapping
     @CacheEvict(cacheNames = "books", allEntries = true)
-    @ApiResponse(responseCode = "201", description = "Created", content = @Content(mediaType = "application/json"))
+    @ApiResponse(
+            responseCode = "201",
+            description = "Created",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+    )
     public ResponseEntity<Void> createBook(@RequestBody @Validated(CreateBook.class) BookRequestDto bookRequestDto) {
         BookDto bookDto = bookService.create(bookRequestDto);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -65,7 +70,9 @@ public class BookController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BookDto.class))
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = BookDto.class)
+            )
     )
     public BookDto replaceBook(
             @PathVariable long id,
@@ -82,9 +89,12 @@ public class BookController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = BookDto.class))
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = BookDto.class)
+            )
     )
-    public BookDto updateBook(@PathVariable long id, @RequestBody @Validated(UpdateBook.class) BookRequestDto bookRequestDto) {
+    public BookDto updateBook(@PathVariable long id,
+                              @RequestBody @Validated(UpdateBook.class) BookRequestDto bookRequestDto) {
         return bookService.update(id, bookRequestDto);
     }
 

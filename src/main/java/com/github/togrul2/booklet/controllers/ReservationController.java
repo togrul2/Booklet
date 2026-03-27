@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -74,7 +75,7 @@ public class ReservationController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ReservationDto.class))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ReservationDto.class))
     )
     public ReservationDto replace(
             @PathVariable long id, @RequestBody @Validated(CreateReservation.class) ReservationRequestDto requestBody
@@ -86,7 +87,7 @@ public class ReservationController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ReservationDto.class))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ReservationDto.class))
     )
     @Caching(
             put = @CachePut(value = "reservation", key = "#id"),

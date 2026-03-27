@@ -20,6 +20,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,11 @@ public class UserController {
 
     @PostMapping
     @CacheEvict(value = "users", allEntries = true)
-    @ApiResponse(responseCode = "201", description = "Created", content = @Content(mediaType = "application/json"))
+    @ApiResponse(
+            responseCode = "201",
+            description = "Created",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+    )
     public ResponseEntity<TokenPairDto> register(@RequestBody @Valid CreateUserDto createUserDto) {
         UserDto user = userService.register(createUserDto);
         URI uri = ServletUriComponentsBuilder
@@ -71,7 +76,9 @@ public class UserController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDto.class))
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserDto.class)
+            )
     )
     @Caching(
             put = @CachePut(value = "user", key = "#id"),
@@ -91,7 +98,9 @@ public class UserController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDto.class))
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserDto.class)
+            )
     )
     public UserDto replace(
             @PathVariable long id, @RequestBody @Validated(CreateUser.class) UpdateUserDto updateUserDto
@@ -122,7 +131,9 @@ public class UserController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDto.class))
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserDto.class)
+            )
     )
     @Caching(
             put = @CachePut(
@@ -138,7 +149,9 @@ public class UserController {
     @ApiResponse(
             responseCode = "200",
             description = "Ok",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDto.class))
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserDto.class)
+            )
     )
     @Caching(
             put = @CachePut(
