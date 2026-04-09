@@ -2,9 +2,11 @@ package com.github.togrul2.booklet.repositories;
 
 import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Reservation;
+import com.github.togrul2.booklet.entities.ReservationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
@@ -15,40 +17,47 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
      * Returns a page of reservation belonging to the authenticated user.
      *
      * @param pageable the pageable to request a paged result, can be {@link Pageable#unpaged()}, must not be
-     *          {@literal null}.
+     *                 {@literal null}.
      * @return a page of reservations.
      */
-    @Query(
-            "SELECT r FROM Reservation r " +
-                    "WHERE r.user.email = ?#{principal?.username}"
-    )
+    @Query("SELECT r FROM Reservation r WHERE r.user.email = ?#{principal?.username}")
     Page<Reservation> findAllForAuthUser(Pageable pageable);
 
-    @Query(
-            "SELECT CASE " +
-            "WHEN COUNT(r) > 0 " +
-            "THEN TRUE " +
-            "ELSE FALSE " +
-            "END " +
-            "FROM Reservation r " +
-            "WHERE r.book = :book " +
-            "AND ((r.startDate <= :start AND r.endDate >= :start) " +
-            "OR (r.startDate <= :end AND r.endDate >= :end))"
-    )
+    @Query("""
+                SELECT CASE
+                WHEN COUNT(r) > 0
+                THEN TRUE
+                ELSE FALSE
+                END
+                FROM Reservation r
+                WHERE r.book = :book
+                AND ((r.startDate <= :start AND r.endDate >= :start)
+                OR (r.startDate <= :end AND r.endDate >= :end))
+            """)
     boolean hasOverlappingSession(Book book, LocalDateTime start, LocalDateTime end);
 
-    @Query(
-            "SELECT r FROM Reservation r " +
-            "WHERE r.id = :id " +
-            "AND r.user.email = ?#{principal?.username}" +
-            "OR ?#{principal?.authorities.contains('ROLE_ADMIN')} = true"
-    )
+    @Query("""
+                SELECT r FROM Reservation r
+                WHERE r.id = :id
+                AND r.user.email = ?#{principal?.username}
+                OR ?#{principal?.authorities.contains('ROLE_ADMIN')} = true
+            """)
     Optional<Reservation> findById(long id);
 
-    @Query(
-            "SELECT r FROM Reservation r " +
-            "WHERE r.id = :id " +
-            "AND r.user.email = ?#{principal?.username}"
-    )
+    @Query("""
+                SELECT r FROM Reservation r
+                WHERE r.id = :id
+                AND r.user.email = ?#{principal?.username}
+            """)
     Optional<Reservation> findByIdForAuthUser(long id);
+
+    @Modifying
+    @Query("""
+                        UPDATE Reservation r
+                        SET r.status = :status
+                        WHERE r.id = :id
+                        AND r.user.email = ?#{principal?.username}
+                        OR ?#{principal?.authorities.contains('ROLE_ADMIN')} = true
+            """)
+    boolean updateReservationStatus(long id, ReservationStatus status);
 }

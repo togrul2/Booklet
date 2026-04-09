@@ -2,11 +2,13 @@ package com.github.togrul2.booklet.services;
 
 import com.github.togrul2.booklet.annotations.IsAdmin;
 import com.github.togrul2.booklet.annotations.IsUser;
-import com.github.togrul2.booklet.dtos.reservation.ReservationRequestDto;
 import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
+import com.github.togrul2.booklet.dtos.reservation.ReservationRequestDto;
 import com.github.togrul2.booklet.entities.Book;
 import com.github.togrul2.booklet.entities.Reservation;
+import com.github.togrul2.booklet.entities.ReservationStatus;
 import com.github.togrul2.booklet.entities.User;
+import com.github.togrul2.booklet.events.ReservationCreatedEvent;
 import com.github.togrul2.booklet.mappers.ReservationMapper;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.ReservationRepository;
@@ -14,6 +16,7 @@ import com.github.togrul2.booklet.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
@@ -32,6 +35,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @IsUser
     public ReservationDto findById(long id) {
@@ -92,6 +96,7 @@ public class ReservationService {
     }
 
     @IsUser
+    @Transactional
     public ReservationDto reserveBook(@NonNull UserDetails userDetails, @NonNull ReservationRequestDto reservationDto) {
         // Create reservation instance.
         Reservation reservation = ReservationMapper.INSTANCE.toReservation(reservationDto);
@@ -105,7 +110,12 @@ public class ReservationService {
         reservation.setBook(book);
 
         validateReservation(reservation);
-        return ReservationMapper.INSTANCE.toReservationDto(reservationRepository.save(reservation));
+        Reservation createdReservation = reservationRepository.save(reservation);
+        ReservationDto savedReservation = ReservationMapper.INSTANCE.toReservationDto(createdReservation);
+
+        // Send event to notify other components about the new reservation.
+        eventPublisher.publishEvent(new ReservationCreatedEvent(savedReservation));
+        return savedReservation;
     }
 
     @IsAdmin
@@ -137,11 +147,24 @@ public class ReservationService {
      * @param id The id of the reservation to delete.
      * @throws ResourceNotFoundException() the reservation does not exist.
      */
-    @IsUser
+    @IsAdmin
     public void delete(long id) {
         Reservation reservation = reservationRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation not found."));
         reservationRepository.delete(reservation);
+    }
+
+    @IsUser
+    public void cancelReservation(long id) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found."));
+
+        if (reservation.getStatus() == ReservationStatus.CANCELLED) {
+            throw new IllegalStateException("Reservation is already canceled.");
+        }
+
+        reservation.setStatus(ReservationStatus.CANCELLED);
+        reservationRepository.save(reservation);
     }
 }

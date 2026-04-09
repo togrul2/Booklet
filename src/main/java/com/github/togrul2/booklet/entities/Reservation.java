@@ -19,4 +19,7 @@ public class Reservation {
     private Book book;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    @Enumerated(value = EnumType.ORDINAL)
+    @Column(nullable = false)
+    private ReservationStatus status = ReservationStatus.RESERVED;
 }
