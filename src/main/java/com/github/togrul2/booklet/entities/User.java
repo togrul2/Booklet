@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
@@ -44,8 +43,7 @@ public class User implements UserDetails {
     private String email;
     private String password;
     @Column(nullable = false)
-    @ColumnDefault("true")
-    private boolean active;
+    private boolean active = true;
     @CreationTimestamp
     private LocalDateTime creationDate;
     @UpdateTimestamp

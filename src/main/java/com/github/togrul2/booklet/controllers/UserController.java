@@ -116,8 +116,9 @@ public class UserController {
             }
     )
     @ApiResponse(responseCode = "204", description = "User deleted")
-    public void delete(@PathVariable long id) {
+    public ResponseEntity<Void> delete(@PathVariable long id) {
         userService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me")
@@ -175,8 +176,9 @@ public class UserController {
                     )
             }
     )
-    public void deleteAuthUser() {
+    public ResponseEntity<Void> deleteAuthUser() {
         userService.deleteAuthUser();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me/reservations")
