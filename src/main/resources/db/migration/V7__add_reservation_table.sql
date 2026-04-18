@@ -5,6 +5,7 @@ CREATE TABLE reservation
     book_id    BIGINT,
     start_date TIMESTAMP WITHOUT TIME ZONE,
     end_date   TIMESTAMP WITHOUT TIME ZONE,
+    status     SMALLINT                                NOT NULL,
     CONSTRAINT pk_reservation PRIMARY KEY (id)
 );
 

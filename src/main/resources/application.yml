@@ -21,10 +21,6 @@ spring:
       connection-timeout: 20000
       maximum-pool-size: 5
 
-    url: jdbc:postgresql://postgres:5432/booklet
-    username: postgres
-    password: postgres
-
   jpa:
     hibernate:
       ddl-auto: validate
