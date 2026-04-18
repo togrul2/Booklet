@@ -27,7 +27,6 @@ public class Author {
     @Column(nullable = false)
     private LocalDate birthDate;
     private LocalDate deathDate;
-    @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
     private String biography;
 }
