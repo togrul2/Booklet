@@ -4,6 +4,7 @@ import com.github.togrul2.booklet.annotations.ApiErrorResponses;
 import com.github.togrul2.booklet.dtos.reservation.CreateReservation;
 import com.github.togrul2.booklet.dtos.reservation.ReservationDto;
 import com.github.togrul2.booklet.dtos.reservation.ReservationRequestDto;
+import com.github.togrul2.booklet.dtos.reservation.UpdateReservation;
 import com.github.togrul2.booklet.services.ReservationService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -97,7 +98,7 @@ public class ReservationController {
             )
     )
     public ReservationDto update(
-            @PathVariable long id, @RequestBody @Validated ReservationRequestDto requestBody
+            @PathVariable long id, @RequestBody @Validated(UpdateReservation.class) ReservationRequestDto requestBody
     ) {
         return reservationService.update(id, requestBody);
     }

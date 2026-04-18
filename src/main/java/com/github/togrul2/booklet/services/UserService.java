@@ -55,6 +55,7 @@ public class UserService {
         user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(createUserDto.password()));
         validateUser(user);
+        // TODO: Send user a confirmation email.
         return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
     }
 

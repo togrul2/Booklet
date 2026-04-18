@@ -1,17 +1,14 @@
 package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.annotations.ApiErrorResponses;
-import com.github.togrul2.booklet.dtos.author.AuthorDto;
-import com.github.togrul2.booklet.dtos.author.AuthorFilterDto;
-import com.github.togrul2.booklet.dtos.author.AuthorRequestDto;
-import com.github.togrul2.booklet.dtos.author.CreateAuthor;
+import com.github.togrul2.booklet.dtos.author.*;
 import com.github.togrul2.booklet.services.AuthorService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.hibernate.sql.Update;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -56,7 +53,7 @@ public class AuthorController {
             description = "Created",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
     )
-    public ResponseEntity<Void> create(@RequestBody @Valid AuthorRequestDto createAuthorDto) {
+    public ResponseEntity<Void> create(@RequestBody @Validated(CreateAuthor.class) AuthorRequestDto createAuthorDto) {
         AuthorDto authorDto = authorService.create(createAuthorDto);
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -97,7 +94,7 @@ public class AuthorController {
             evict = @CacheEvict(cacheNames = {"authors", "books", "book"}, allEntries = true)
     )
     public AuthorDto update(
-            @PathVariable long id, @RequestBody @Validated(CreateAuthor.class) AuthorRequestDto authorRequestDto
+            @PathVariable long id, @RequestBody @Validated(UpdateAuthor.class) AuthorRequestDto authorRequestDto
     ) {
         return authorService.update(id, authorRequestDto);
     }

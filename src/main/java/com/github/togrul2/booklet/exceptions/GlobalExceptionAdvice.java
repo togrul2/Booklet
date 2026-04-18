@@ -4,11 +4,9 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -43,7 +41,10 @@ public class GlobalExceptionAdvice extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request
+            MethodArgumentNotValidException ex,
+            @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode status,
+            @NonNull WebRequest request
     ) {
         log.warn("Validation exception: {}", ex.getMessage());
         List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors();
@@ -52,7 +53,13 @@ public class GlobalExceptionAdvice extends ResponseEntityExceptionHandler {
                         Collectors.mapping(FieldError::getDefaultMessage, Collectors.toSet())
                 )
         );
-        return ResponseEntity.badRequest().body(errorsMap);
+
+        // super returns an RFC 7807 ProblemDetail body; enrich it with field-level errors.
+        ResponseEntity<Object> response = super.handleMethodArgumentNotValid(ex, headers, status, request);
+        if (response != null && response.getBody() instanceof ProblemDetail problemDetail) {
+            problemDetail.setProperty("errors", errorsMap);
+        }
+        return response;
     }
 
     /**
