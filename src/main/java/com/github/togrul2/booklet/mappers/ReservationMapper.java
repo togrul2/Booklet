@@ -14,6 +14,7 @@ public interface ReservationMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "book", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "status", ignore = true)
     Reservation toReservation(ReservationRequestDto reservationDto);
 
     ReservationDto toReservationDto(Reservation reservation);

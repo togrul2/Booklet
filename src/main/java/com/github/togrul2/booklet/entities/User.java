@@ -43,6 +43,7 @@ public class User implements UserDetails {
     private String email;
     private String password;
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
     @CreationTimestamp
     private LocalDateTime creationDate;

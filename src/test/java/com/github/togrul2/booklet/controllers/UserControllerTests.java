@@ -1,16 +1,18 @@
 package com.github.togrul2.booklet.controllers;
 
-import com.github.togrul2.booklet.dtos.user.UserDto;
 import com.github.togrul2.booklet.entities.Role;
 import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.repositories.UserRepository;
-import org.junit.jupiter.api.*;
+import com.github.togrul2.booklet.services.JwtService;
+import io.restassured.RestAssured;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -21,25 +23,26 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserControllerTests {
     @Autowired
-    private TestRestTemplate restTemplate;
-    @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private JwtService jwtService;
     @LocalServerPort
     private int port;
-    private String domain;
 
     @BeforeEach
     public void setUp() {
-        userRepository.save(
-            User.builder()
+        User authUser = User.builder()
                 .firstName("John")
                 .lastName("Doe")
-                .email("admin@example.com")
+                .email("johndoe@example.com")
                 .password("Password123$")
                 .role(Role.ADMIN)
-                .build()
-        );
-        domain = "http://localhost:" + port;
+                .build();
+        userRepository.save(authUser);
+
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
+        RestAssured.authentication = RestAssured.oauth2(jwtService.createAccessToken(authUser, authUser.getRole()));
     }
 
     @AfterEach
@@ -48,12 +51,12 @@ public class UserControllerTests {
     }
 
     @Test
-    @Disabled
     public void testGetAuthUser() {
-        ResponseEntity<UserDto> response = restTemplate.getForEntity(
-            domain + "/api/v1/users/me", UserDto.class
-        );
-        Assertions.assertTrue(response.getStatusCode().is2xxSuccessful());
-        Assertions.assertNotNull(response.getBody());
+        RestAssured.given()
+                .when()
+                .get("/api/v1/users/me")
+                .then()
+                .statusCode(200)
+                .body("email", Matchers.is("johndoe@example.com"));
     }
 }

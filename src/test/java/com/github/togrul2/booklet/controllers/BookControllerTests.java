@@ -1,22 +1,21 @@
 package com.github.togrul2.booklet.controllers;
 
 import com.github.togrul2.booklet.annotations.WithMockAdminUser;
-import com.github.togrul2.booklet.dtos.book.BookDto;
-import com.github.togrul2.booklet.dtos.book.BookRequestDto;
 import com.github.togrul2.booklet.entities.*;
 import com.github.togrul2.booklet.repositories.AuthorRepository;
 import com.github.togrul2.booklet.repositories.BookRepository;
 import com.github.togrul2.booklet.repositories.GenreRepository;
-import org.junit.jupiter.api.*;
+import com.github.togrul2.booklet.services.JwtService;
+import io.restassured.RestAssured;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -29,21 +28,26 @@ import java.util.List;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class BookControllerTests {
     @Autowired
-    private TestRestTemplate restTemplate;
-    @Autowired
     private BookRepository bookRepository;
     @Autowired
     private AuthorRepository authorRepository;
     @Autowired
     private GenreRepository genreRepository;
+    @Autowired
+    private JwtService jwtService;
     @LocalServerPort
     private int port;
-    private String domain;
+
     private Book book;
 
     @BeforeEach
     public void setUp() {
-        domain = "http://localhost:" + port;
+        User authUser = User.builder().email("johndoe@example.com").role(Role.ADMIN).build();
+
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
+        RestAssured.authentication = RestAssured.oauth2(jwtService.createAccessToken(authUser, authUser.getRole()));
+
         Author author = authorRepository.save(
                 Author.builder()
                         .name("John")
@@ -82,57 +86,78 @@ public class BookControllerTests {
     }
 
     @Test
-    @Disabled
     public void testGetBooks() {
-        ResponseEntity<PageImpl<BookDto>> response = restTemplate.exchange(
-                domain + "/api/v1/books", HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
-        );
-        Assertions.assertTrue(response.getStatusCode().is2xxSuccessful());
-        Assertions.assertNotNull(response.getBody());
+        RestAssured.given()
+                .when()
+                .get("/api/v1/books")
+                .then()
+                .statusCode(200)
+                .body("content.size()", Matchers.is(2));
     }
 
     @Test
     public void testGetBookById() {
-        ResponseEntity<BookDto> response = restTemplate.getForEntity(
-                domain + "/api/v1/books/{id}", BookDto.class, book.getId()
-        );
-        Assertions.assertTrue(response.getStatusCode().is2xxSuccessful());
-        Assertions.assertNotNull(response.getBody());
+        RestAssured.given()
+                .when()
+                .get("/api/v1/books/{id}", book.getId())
+                .then()
+                .statusCode(200)
+                .body("id", Matchers.is(book.getId().intValue()));
     }
 
     @Test
-    @Disabled
     public void testCreateBook() {
-        BookRequestDto bookDto = BookRequestDto.builder()
-                .title("Book 3")
-                .authorId(book.getAuthor().getId())
-                .genreId(book.getGenre().getId())
-                .isbn("1234567892")
-                .year(2000)
-                .build();
-        ResponseEntity<BookDto> response = restTemplate
-                .postForEntity(domain + "/api/v1/books", bookDto, BookDto.class);
-        Assertions.assertTrue(response.getStatusCode().is2xxSuccessful());
-        Assertions.assertNotNull(response.getHeaders().getLocation());
-        Assertions.assertNotNull(response.getBody());
+        String requestBody = """
+                {
+                    "title": "Book 3",
+                    "authorId": %d,
+                    "genreId": %d,
+                    "isbn": "1234567892",
+                    "year": 2000
+                }
+                """.formatted(book.getAuthor().getId(), book.getGenre().getId());
+
+        RestAssured.given()
+                .contentType("application/json")
+                .body(requestBody)
+                .when()
+                .post("/api/v1/books")
+                .then()
+                .log()
+                .ifError()
+                .statusCode(201)
+                .header("Location", Matchers.matchesPattern(".*/api/v1/books/\\d+"));
     }
 
     @Test
-    @Disabled
     public void testUpdateBook() {
-        BookRequestDto requestBody = BookRequestDto.builder()
-                .title("Book 2 updated")
-                .build();
-        restTemplate.patchForObject(domain + "/api/v1/books/{id}", requestBody, BookDto.class, book.getId());
+        String requestBody = "{\"title\": \"Book 2 updated\"}";
+        RestAssured.given()
+                .contentType("application/json")
+                .body(requestBody)
+                .when()
+                .patch("/api/v1/books/{id}", book.getId())
+                .then()
+                .log()
+                .ifError()
+                .statusCode(200)
+                .body("id", Matchers.is(book.getId().intValue()))
+                .body("title", Matchers.is("Book 2 updated"));
+
         bookRepository
                 .findById(book.getId())
                 .ifPresent(book1 -> Assertions.assertEquals("Book 2 updated", book1.getTitle()));
     }
 
     @Test
-    @Disabled
     public void testDeleteBook() {
-        restTemplate.delete(domain + "/api/v1/books/{id}", book.getId());
+        RestAssured.given()
+                .when()
+                .delete("/api/v1/books/{id}", book.getId())
+                .then()
+                .log()
+                .ifError()
+                .statusCode(204);
         Assertions.assertFalse(bookRepository.existsById(book.getId()));
     }
 }

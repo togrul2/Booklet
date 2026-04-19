@@ -68,6 +68,8 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'org.hamcrest:hamcrest'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
