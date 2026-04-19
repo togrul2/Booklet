@@ -3,7 +3,7 @@ name: booklet-stack
 
 services:
   postgres:
-    image: postgres
+    image: postgres:15
     env_file:
       .env
     ports:

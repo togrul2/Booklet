@@ -1,9 +1,4 @@
 spring:
-  datasource:
-    url: ${JDBC_URL}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-
   flyway:
     enabled: false
 

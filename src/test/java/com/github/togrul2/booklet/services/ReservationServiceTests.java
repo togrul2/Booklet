@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -35,6 +36,8 @@ public class ReservationServiceTests {
     private UserRepository userRepository;
     @Mock
     private UserDetails userDetails;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     private Reservation reservation;
     private User user;
     private Book book;
