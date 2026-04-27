@@ -70,6 +70,9 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'io.rest-assured:rest-assured'
     testImplementation 'org.hamcrest:hamcrest'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
