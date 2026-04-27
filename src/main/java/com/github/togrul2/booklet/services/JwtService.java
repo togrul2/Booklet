@@ -130,6 +130,7 @@ public class JwtService {
         return createToken(claims, userDetails, accessTokenExpiration);
     }
 
+    // TODO: Refactor, substitute role to claims.
     public String createRefreshToken(UserDetails userDetails, Role role) {
         HashMap<String, Object> claims = new HashMap<>(
                 Map.ofEntries(

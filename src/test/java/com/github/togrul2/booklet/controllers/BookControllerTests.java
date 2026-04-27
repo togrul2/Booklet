@@ -138,6 +138,30 @@ public class BookControllerTests {
     }
 
     @Test
+    public void testReplaceBook() {
+        String requestBody = """
+                {
+                    "title": "Updated book title",
+                    "authorId": %d,
+                    "genreId": %d,
+                    "isbn": "1234567892",
+                    "year": 2000
+                }
+                """.formatted(book.getAuthor().getId(), book.getGenre().getId());
+        RestAssured.given()
+                .contentType("application/json")
+                .body(requestBody)
+                .when()
+                .put("/api/v1/books/{id}", book.getId())
+                .then()
+                .log()
+                .ifError()
+                .statusCode(200)
+                .body("id", Matchers.is(book.getId().intValue()))
+                .body("title", Matchers.is("Updated book title"));
+    }
+
+    @Test
     public void testUpdateBook() {
         String requestBody = "{\"title\": \"Book 2 updated\"}";
         RestAssured.given()
