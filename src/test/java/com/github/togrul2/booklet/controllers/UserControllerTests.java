@@ -1,5 +1,6 @@
 package com.github.togrul2.booklet.controllers;
 
+import com.github.togrul2.booklet.configurations.TestcontainersConfiguration;
 import com.github.togrul2.booklet.entities.Role;
 import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.repositories.UserRepository;
@@ -13,26 +14,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @WithMockUser
 @Testcontainers
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
+@Import(TestcontainersConfiguration.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserControllerTests {
-    @SuppressWarnings({"resource", "unused"})
-    @Container
-    @ServiceConnection
-    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
-            .withReuse(true);
-
     @Autowired
     private UserRepository userRepository;
     @Autowired

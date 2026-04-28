@@ -1,5 +1,6 @@
 package com.github.togrul2.booklet.controllers;
 
+import com.github.togrul2.booklet.configurations.TestcontainersConfiguration;
 import com.github.togrul2.booklet.entities.Role;
 import com.github.togrul2.booklet.entities.User;
 import com.github.togrul2.booklet.repositories.TokenRepository;
@@ -14,12 +15,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -28,13 +27,9 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ExtendWith(SpringExtension.class)
+@Import(TestcontainersConfiguration.class)
 public class AuthControllerTests {
-    @SuppressWarnings({"resource", "unused"})
-    @Container
-    @ServiceConnection
-    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
-            .withReuse(true);
-
+    private final String userPassword = "Password123$";
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
@@ -45,10 +40,8 @@ public class AuthControllerTests {
     private TokenRepository tokenRepository;
     @LocalServerPort
     private int port;
-
     private User user;
     private String refreshToken;
-    private final String userPassword = "Password123$";
 
     @BeforeEach
     public void setUp() {
